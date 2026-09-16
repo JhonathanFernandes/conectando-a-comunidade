@@ -51,7 +51,7 @@ patches/                Patches de dependências usados pelo pnpm
 
 ## Requisitos
 
-- Node.js 20 ou superior
+- Node.js 24 ou superior
 - pnpm
 - Banco MySQL disponível para uso da aplicação
 
