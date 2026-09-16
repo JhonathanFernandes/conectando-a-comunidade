@@ -3,7 +3,7 @@
  * Filtros agrupados em dropdown, terracota como cor de ação
  */
 import { useState, useRef, useEffect, useMemo } from "react";
-import { Star, MapPin, Phone, Clock, Instagram, Heart, Search, Globe, Filter, ChevronDown, ChevronRight, MessageSquare, Navigation, X } from "lucide-react";
+import { Star, MapPin, Phone, Clock, Instagram, Heart, Search, Globe, Filter, ChevronDown, ChevronRight, MessageSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { trpc } from "@/lib/trpc";
 import StarRating from "@/components/StarRating";
@@ -51,61 +51,9 @@ interface CommerceItem {
   description: string;
   lat?: string;
   lng?: string;
-  coordsJson?: string | null;
 }
-
-type SelectedCommerce = Omit<CommerceItem, "lat" | "lng"> & {
-  lat: number;
-  lng: number;
-};
 
 // Categorias com contagens dinâmicas são calculadas a partir dos dados do banco
-const CAMPO_COMPRIDO_CENTER = { lat: -25.4275, lng: -49.3170 };
-
-const fallbackCommerces: CommerceItem[] = [
-  { id: -1, name: "Mercado Guassu Campo Comprido", category: "Alimentação", address: "Rua Eduardo Sprada, 720 - Campo Comprido", phone: "(41) 99843-1030", instagram: "@mercadoguassu", hours: "07h-21h", description: "Mercado de bairro com alimentos, mercearia e delivery.", lat: "-25.4255", lng: "-49.3165" },
-  { id: -2, name: "Panificadora Panivida", category: "Alimentação", address: "Rua Luiz Tramontin, 2473 - Campo Comprido", phone: "(41) 3076-5500", instagram: "@panivida", hours: "06h-21h", description: "Padaria e confeitaria para café da manhã e lanches.", lat: "-25.4240", lng: "-49.3153" },
-  { id: -3, name: "Café Campo Comprido", category: "Alimentação", address: "Rua Prof. João Falarz, 1720-A - Campo Comprido", phone: "(41) 99863-1106", instagram: "@cafecampocomprido", hours: "12h-20h", description: "Cafeteria local para encontros rápidos e cafés especiais.", lat: "-25.4240", lng: "-49.3240" },
-  { id: -4, name: "Exclusive Studio", category: "Beleza", address: "Rua Waldir Pontes, 91 - Campo Comprido", phone: "(41) 99883-0497", instagram: "@exclusivestudio", hours: "09h-19h", description: "Salão de beleza com atendimento por agendamento.", lat: "-25.4240", lng: "-49.3118" },
-  { id: -5, name: "DG Beauty Hair", category: "Beleza", address: "Rua Eduardo Sprada, 2100 - Campo Comprido", phone: "(41) 99707-3300", instagram: "@dgbeautyhair", hours: "09h-19h", description: "Cortes, coloração e cuidados capilares.", lat: "-25.4240", lng: "-49.3140" },
-  { id: -6, name: "Farmácia Campofarma", category: "Saúde", address: "Rua Eduardo Sprada, 4600 - Campo Comprido", phone: "(41) 3373-1718", instagram: "@campofarma", hours: "08h-22h", description: "Farmácia local com medicamentos e itens de cuidado pessoal.", lat: "-25.4265", lng: "-49.3155" },
-  { id: -7, name: "BePet Pet Shop", category: "Saúde", address: "Rua Prof. João Falarz, 1757 - Campo Comprido", phone: "(41) 99611-0163", instagram: "@bepetpetshop", hours: "09h-18h30", description: "Pet shop com produtos, banho e tosa.", lat: "-25.4240", lng: "-49.3106" },
-  { id: -8, name: "Loja de Informática e Celulares CC", category: "Informática", address: "Av. João Gualberto, 1400 - Campo Comprido", phone: "(41) 3274-4500", instagram: "@informatica_cc", hours: "09h-19h", description: "Assistência, acessórios e venda de celulares.", lat: "-25.4240", lng: "-49.3234" },
-  { id: -9, name: "Papelaria e Bazar Campo Comprido", category: "Papelaria", address: "Rua Deputado Heitor Alencar Furtado, 3400 - Campo Comprido", phone: "(41) 3264-7900", instagram: "@papelariacampocomprido", hours: "08h-18h", description: "Materiais escolares, escritório e bazar.", lat: "-25.4288", lng: "-49.3185" },
-  { id: -10, name: "Loja de Roupas Moda Campo", category: "Vestuário", address: "Rua Professor João Falarz, 1400 - Campo Comprido", phone: "(41) 3285-5200", instagram: "@modacampo", hours: "09h-19h", description: "Moda casual e peças para o dia a dia.", lat: "-25.4275", lng: "-49.3155" },
-  { id: -11, name: "Auto Center Campo Comprido", category: "Automotivo", address: "Rua Renato Polatti, 3000 - Campo Comprido", phone: "(41) 3274-3300", instagram: "@autocentercampo", hours: "08h-18h", description: "Manutenção automotiva, pneus e serviços rápidos.", lat: "-25.4284", lng: "-49.3165" },
-  { id: -12, name: "Loja de Materiais de Construção Silva", category: "Construção", address: "Rua Renato Polatti, 3600 - Campo Comprido", phone: "(41) 3288-6400", instagram: "@construcaosilva", hours: "07h-18h", description: "Materiais de construção, ferramentas e ferragens.", lat: "-25.4262", lng: "-49.3148" },
-  { id: -13, name: "Studio Pilates Campo Comprido", category: "Prestadores de serviço", address: "Rua Professor João Falarz, 2600 - Campo Comprido", phone: "(41) 3285-8400", instagram: "@pilatescampocomprido", hours: "07h-22h", description: "Aulas de pilates e atendimento personalizado.", lat: "-25.4285", lng: "-49.3152" },
-];
-
-function getApproxCoords(item: CommerceItem) {
-  const fromLat = Number.parseFloat(item.lat || "");
-  const fromLng = Number.parseFloat(item.lng || "");
-  if (Number.isFinite(fromLat) && Number.isFinite(fromLng) && fromLat !== 0 && fromLng !== 0) {
-    return { lat: fromLat, lng: fromLng };
-  }
-
-  if (item.coordsJson) {
-    try {
-      const parsed = JSON.parse(item.coordsJson) as { lat?: unknown; lng?: unknown };
-      const lat = typeof parsed.lat === "number" ? parsed.lat : Number.parseFloat(String(parsed.lat ?? ""));
-      const lng = typeof parsed.lng === "number" ? parsed.lng : Number.parseFloat(String(parsed.lng ?? ""));
-      if (Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0 && lng !== 0) {
-        return { lat, lng };
-      }
-    } catch {
-      // Fall back to a stable approximate point below.
-    }
-  }
-
-  const seed = `${item.id}-${item.name}`.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const latOffset = ((seed % 17) - 8) * 0.00045;
-  const lngOffset = (((seed * 7) % 17) - 8) * 0.00045;
-  return {
-    lat: CAMPO_COMPRIDO_CENTER.lat + latOffset,
-    lng: CAMPO_COMPRIDO_CENTER.lng + lngOffset,
-  };
-}
 
 export default function Comercio() {
   const [activeCategory, setActiveCategory] = useState("Todos");
@@ -113,10 +61,6 @@ export default function Comercio() {
   const [filterOpen, setFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
-  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
-  const [isMapReady, setIsMapReady] = useState(false);
-  const [selectedCommerce, setSelectedCommerce] = useState<SelectedCommerce | null>(null);
 
   // Real data from database
   const { data: dbCommerces, isLoading: dbLoading } = trpc.commerce.listApproved.useQuery();
@@ -150,7 +94,7 @@ export default function Comercio() {
   }, [allReviews]);
 
   // Use real DB data, fallback to empty list while loading
-  const dbCommerceList: CommerceItem[] = (dbCommerces || []).map((c) => ({
+  const commerceList: CommerceItem[] = (dbCommerces || []).map((c) => ({
     id: c.id,
     name: c.name,
     category: c.category,
@@ -161,9 +105,7 @@ export default function Comercio() {
     description: c.description || "",
     lat: c.lat || undefined,
     lng: c.lng || undefined,
-    coordsJson: c.coordsJson,
   }));
-  const commerceList = dbCommerceList.length > 0 ? dbCommerceList : fallbackCommerces;
   const addReviewMutation = trpc.review.add.useMutation({
     onSuccess: () => {
       toast.success("Avaliação enviada com sucesso!");
@@ -225,73 +167,37 @@ export default function Comercio() {
     });
   }, [groupedItems]);
 
-  const commercesWithCoords = useMemo(() => {
-    return filtered.map((item) => ({
-      item,
-      ...getApproxCoords(item),
-    }));
+  // Comerce commerce: map coordinates
+  const commerceCoords = useMemo(() => {
+    const coords: Record<string, { lat: number; lng: number }> = {};
+    filtered.forEach((item) => {
+      // Generate deterministic coordinates within Campo Comprido bounds
+      const hash = item.name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+      const lat = -25.4240 + (hash % 100) * 0.0001;
+      const lng = -49.3200 + ((hash * 7) % 100) * 0.0001;
+      coords[item.id.toString()] = { lat, lng };
+    });
+    return coords;
   }, [filtered]);
 
-  const flyToCommerce = (item: CommerceItem) => {
-    const coords = getApproxCoords(item);
-    setSelectedCommerce({ ...item, ...coords });
-    if (mapRef.current) {
-      mapRef.current.panTo(coords);
-      mapRef.current.setZoom(16);
-    }
-    const mapElement = document.getElementById("comercio-map");
-    mapElement?.scrollIntoView({ behavior: "smooth", block: "center" });
-  };
-
-  useEffect(() => {
-    if (!isMapReady || !mapRef.current || !window.google?.maps) return;
-
-    markersRef.current.forEach((marker) => {
-      marker.map = null;
+  // Show one marker per visible category group
+  const mapMarkers = useMemo(() => {
+    const markers: Array<{ lat: number; lng: number; title: string; category: string }> = [];
+    orderedGroups.forEach((cat) => {
+      const items = groupedItems[cat];
+      if (items.length > 0) {
+        // Place marker near center of group items
+        const hash = items[0].name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+        markers.push({
+          lat: -25.4270 + (hash % 20) * 0.0005,
+          lng: -49.3180 + ((hash * 3) % 20) * 0.0005,
+          title: `${cat} (${items.length})`,
+          category: cat,
+        });
+      }
     });
-    markersRef.current = [];
-
-    const map = mapRef.current;
-    const infoWindow = infoWindowRef.current ?? new google.maps.InfoWindow();
-    infoWindowRef.current = infoWindow;
-    const bounds = new google.maps.LatLngBounds();
-
-    commercesWithCoords.forEach(({ item, lat, lng }) => {
-      const marker = new google.maps.marker.AdvancedMarkerElement({
-        map,
-        position: { lat, lng },
-        title: item.name,
-      });
-
-      marker.addListener("click", () => {
-        setSelectedCommerce({ ...item, lat, lng });
-        const content = document.createElement("div");
-        content.style.maxWidth = "260px";
-        content.style.padding = "8px";
-        content.innerHTML = `
-          <p style="font-weight:bold;margin:0;font-size:14px;"></p>
-          <p style="margin:2px 0 0;font-size:12px;color:#666;"></p>
-          <p style="margin:2px 0;font-size:12px;"></p>
-          <p style="margin:0;font-size:12px;"></p>
-        `;
-        const [name, category, address, phone] = Array.from(content.querySelectorAll("p"));
-        name.textContent = item.name;
-        category.textContent = item.category;
-        address.textContent = item.address;
-        phone.textContent = `Telefone: ${item.phone}`;
-        infoWindow.setContent(content);
-        infoWindow.open({ anchor: marker, map });
-      });
-
-      markersRef.current.push(marker);
-      bounds.extend({ lat, lng });
-    });
-
-    if (!bounds.isEmpty()) {
-      map.fitBounds(bounds);
-      if ((map.getZoom() ?? 15) > 16) map.setZoom(16);
-    }
-  }, [isMapReady, commercesWithCoords]);
+    return markers;
+  }, [orderedGroups, groupedItems]);
 
   return (
     <div className="min-h-screen">
@@ -410,90 +316,9 @@ export default function Comercio() {
             {filtered.length} {filtered.length === 1 ? "estabelecimento" : "estabelecimentos"} encontrado{filtered.length !== 1 ? "s" : ""}
           </p>
 
-          {/* Interactive Map */}
-          <div id="comercio-map" className="relative rounded-xl overflow-hidden border border-border shadow-lg mb-8" style={{ height: "400px", minHeight: "350px" }}>
-            <MapView
-              className="w-full h-full"
-              initialCenter={CAMPO_COMPRIDO_CENTER}
-              initialZoom={15}
-              fallbackMarkers={commercesWithCoords.map(({ item, lat, lng }) => ({
-                id: item.id,
-                title: item.name,
-                subtitle: item.category,
-                lat,
-                lng,
-                onClick: () => setSelectedCommerce({ ...item, lat, lng }),
-              }))}
-              onMapReady={(map) => {
-                mapRef.current = map;
-                setIsMapReady(true);
-              }}
-            />
-            <div className="absolute top-4 left-4 bg-card/90 dark:bg-[oklch(0.22_0.02_160)]/90 px-3 py-1.5 rounded-full text-xs font-medium text-muted-foreground dark:text-[oklch(0.70_0.02_80)] shadow-sm">
-              {commercesWithCoords.length} {commercesWithCoords.length === 1 ? "comércio" : "comércios"} no mapa
-            </div>
-
-            {selectedCommerce && (
-              <div className="absolute bottom-4 left-4 right-4 lg:left-auto lg:right-4 lg:w-80 bg-card dark:bg-[oklch(0.22_0.02_160)] rounded-xl shadow-2xl border border-border z-10">
-                <div className="p-4 border-b border-border">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-serif text-lg font-bold text-foreground">{selectedCommerce.name}</h3>
-                      <p className="text-sm text-[oklch(0.72_0.12_40)] font-medium mt-0.5">{selectedCommerce.category}</p>
-                    </div>
-                    <button onClick={() => setSelectedCommerce(null)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
-                      <X className="w-4 h-4 text-muted-foreground" />
-                    </button>
-                  </div>
-                </div>
-                <div className="p-4 space-y-2">
-                  <div className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-[oklch(0.72_0.12_40)] shrink-0 mt-0.5" />
-                    <p className="text-sm text-foreground">{selectedCommerce.address}</p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Phone className="w-4 h-4 text-[oklch(0.72_0.12_40)] shrink-0 mt-0.5" />
-                    <p className="text-sm text-foreground">{selectedCommerce.phone}</p>
-                  </div>
-                </div>
-                <div className="p-4 pt-0 flex gap-2">
-                  <button
-                    onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${selectedCommerce.lat},${selectedCommerce.lng}`, "_blank")}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[oklch(0.72_0.12_40)] text-white px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-[oklch(0.65_0.12_40)] transition-colors"
-                  >
-                    <Navigation className="w-4 h-4" /> Rotas
-                  </button>
-                  <button
-                    onClick={() => { if (selectedCommerce.phone) window.open(`tel:${selectedCommerce.phone}`, "_self"); }}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 bg-primary text-white px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
-                  >
-                    <Phone className="w-4 h-4" /> Ligar
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Accordion: category groups (collapsed by default) */}
           <div className="space-y-4">
-            {dbLoading ? (
-              [1, 2, 3].map((item) => (
-                <div key={item} className="rounded-xl border border-border bg-card p-5 animate-pulse">
-                  <div className="h-5 bg-muted rounded w-40 mb-3" />
-                  <div className="h-4 bg-muted rounded w-64 max-w-full" />
-                </div>
-              ))
-            ) : filtered.length === 0 ? (
-              <div className="text-center py-12">
-                <Globe className="w-16 h-16 mx-auto text-muted-foreground/40 mb-4" />
-                <h3 className="font-serif text-xl font-semibold text-foreground mb-2">
-                  Nenhum comércio encontrado
-                </h3>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  Ainda não há estabelecimentos aprovados para exibir nesta seleção.
-                </p>
-              </div>
-            ) : orderedGroups.map((cat) => (
+            {orderedGroups.map((cat) => (
               <div key={cat} className="rounded-xl border border-border bg-card overflow-hidden">
                 {/* Group header */}
                 <button
@@ -595,28 +420,7 @@ export default function Comercio() {
                 )}
 
                   {/* Actions */}
-                <div className="mt-4 flex gap-2 flex-wrap">
-                  <button
-                    onClick={() => flyToCommerce(item)}
-                    className="text-xs px-3 py-1.5 rounded-lg bg-[oklch(0.72_0.12_40)]/10 text-[oklch(0.72_0.12_40)] hover:bg-[oklch(0.72_0.12_40)] hover:text-white transition-colors flex items-center gap-1"
-                  >
-                    <MapPin className="w-3 h-3" /> Ver no mapa
-                  </button>
-                  <button
-                    onClick={() => {
-                      const coords = getApproxCoords(item);
-                      window.open(`https://www.google.com/maps/dir/?api=1&destination=${coords.lat},${coords.lng}`, "_blank");
-                    }}
-                    className="text-xs px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted transition-colors flex items-center gap-1"
-                  >
-                    <Navigation className="w-3 h-3" /> Rota
-                  </button>
-                  <button
-                    onClick={() => { if (item.phone) window.open(`tel:${item.phone}`, "_self"); }}
-                    className="text-xs px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted transition-colors flex items-center gap-1"
-                  >
-                    <Phone className="w-3 h-3" /> Ligar
-                  </button>
+                <div className="mt-4 flex gap-2">
                   <button
                     onClick={() => setReviewTarget({ type: "commerce", id: item.id, name: item.name })}
                     className="text-xs px-3 py-1.5 rounded-lg bg-[oklch(0.72_0.12_40)]/10 text-[oklch(0.72_0.12_40)] hover:bg-[oklch(0.72_0.12_40)] hover:text-white transition-colors flex items-center gap-1"
@@ -635,6 +439,61 @@ export default function Comercio() {
                 </AnimatePresence>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Mapa Interativo */}
+      <section className="py-10 lg:py-14 bg-card border-t border-border">
+        <div className="container">
+          <div className="flex items-center gap-3 mb-6">
+            <MapPin className="text-[oklch(0.72_0.12_40)]" size={24} />
+            <h2 className="font-serif text-2xl lg:text-3xl font-bold text-foreground">Mapa de Comércios</h2>
+          </div>
+          <div className="rounded-2xl overflow-hidden border border-border shadow-lg">
+            <MapView
+              className="h-[450px]"
+              initialCenter={{ lat: -25.4270, lng: -49.3180 }}
+              initialZoom={15}
+              onMapReady={(map) => {
+                mapRef.current = map;
+                // Add one pin per commerce (filtered)
+                filtered.forEach((item) => {
+                  const lat = parseFloat(item.lat || "0");
+                  const lng = parseFloat(item.lng || "0");
+                  if (!lat || !lng) return;
+                  const marker = new google.maps.marker.AdvancedMarkerElement({
+                    map,
+                    position: { lat, lng },
+                    title: item.name,
+                  });
+                  marker.addListener("click", () => {
+                    const infoWindow = new google.maps.InfoWindow({
+                      content: `
+                        <div style="max-width:260px;padding:8px;">
+                          <p style="font-weight:bold;margin:0;font-size:14px;">${item.name}</p>
+                          <p style="margin:2px 0 0;font-size:12px;color:#666;">${item.category}</p>
+                          <p style="margin:2px 0;font-size:12px;">${item.address}</p>
+                          <p style="margin:0;font-size:12px;">📞 ${item.phone}</p>
+                        </div>
+                      `,
+                    });
+                    infoWindow.open({ anchor: marker, map });
+                  });
+                });
+                // Fit bounds
+                const bounds = new google.maps.LatLngBounds();
+                filtered.forEach((item) => {
+                  const lat = parseFloat(item.lat || "0");
+                  const lng = parseFloat(item.lng || "0");
+                  if (lat && lng) bounds.extend({ lat, lng });
+                });
+                if (!bounds.isEmpty()) {
+                  map.fitBounds(bounds);
+                  if (map.getZoom()! > 16) map.setZoom(16);
+                }
+              }}
+            />
           </div>
         </div>
       </section>

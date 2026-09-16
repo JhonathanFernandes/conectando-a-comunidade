@@ -7,7 +7,6 @@ import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
-import { ENV } from "./env";
 import { serveStatic, setupVite } from "./vite";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -37,42 +36,6 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
   registerOAuthRoutes(app);
-
-  app.use("/forge-maps", async (req, res) => {
-    const path = req.path.replace(/^\/forge-maps/, "") || "/";
-    if (!ENV.forgeApiUrl || !ENV.forgeApiKey) {
-      res.status(503).json({
-        error: "Google Maps proxy not configured",
-        message: "Set BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY to enable the map proxy.",
-      });
-      return;
-    }
-
-    try {
-      const upstream = new URL(`${ENV.forgeApiUrl.replace(/\/+$/, "")}/v1/maps/proxy${path}`);
-      for (const [key, value] of Object.entries(req.query)) {
-        if (Array.isArray(value)) {
-          value.forEach((item) => upstream.searchParams.append(key, String(item)));
-        } else if (value !== undefined) {
-          upstream.searchParams.set(key, String(value));
-        }
-      }
-
-      const response = await fetch(upstream.toString());
-      const body = await response.arrayBuffer();
-      res.status(response.status);
-      response.headers.forEach((value, key) => {
-        if (key.toLowerCase() !== "content-encoding") {
-          res.setHeader(key, value);
-        }
-      });
-      res.send(Buffer.from(body));
-    } catch (error) {
-      console.error("[Forge Maps Proxy] failed:", error);
-      res.status(502).json({ error: "Maps proxy unavailable" });
-    }
-  });
-
   // tRPC API
   app.use(
     "/api/trpc",

@@ -45,23 +45,15 @@ export default function Galeria() {
       <Header />
 
       {/* Hero */}
-      <section className="pt-28 lg:pt-36 pb-12 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src="/manus-storage/viaduto-orleans_754366df.jpg"
-            alt="Viaduto do Orleans no Campo Comprido"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-black/55" />
-        </div>
-        <div className="container relative z-10">
-          <p className="text-white/70 font-medium text-sm uppercase tracking-widest mb-2">
+      <section className="pt-28 lg:pt-36 pb-12 bg-secondary">
+        <div className="container">
+          <p className="text-primary font-medium text-sm uppercase tracking-widest mb-2">
             Galeria
           </p>
-          <h1 className="font-serif text-3xl lg:text-5xl font-bold text-white mb-4">
+          <h1 className="font-serif text-3xl lg:text-5xl font-bold text-foreground mb-4">
             O Campo Comprido em fotos
           </h1>
-          <p className="text-white/80 text-lg max-w-2xl">
+          <p className="text-muted-foreground text-lg max-w-2xl">
             Imagens que registram a beleza, os eventos e as transformações do nosso bairro.
           </p>
         </div>

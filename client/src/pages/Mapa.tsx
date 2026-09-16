@@ -531,22 +531,6 @@ export default function Mapa() {
               initialCenter={CAMPO_COMPRIDO_CENTER}
               initialZoom={14}
               onMapReady={handleMapReady}
-              fallbackMarkers={filteredBusinesses.map((biz) => ({
-                id: biz.id,
-                title: biz.name,
-                subtitle: allSegments.find((s) => s.id === biz.category)?.label || biz.category,
-                lat: biz.lat,
-                lng: biz.lng,
-                onClick: () => setSelectedBusiness({
-                  name: biz.name,
-                  category: biz.category,
-                  address: biz.address,
-                  phone: biz.phone,
-                  rating: biz.rating,
-                  lat: biz.lat,
-                  lng: biz.lng,
-                }),
-              }))}
               className="w-full h-full"
             />
 

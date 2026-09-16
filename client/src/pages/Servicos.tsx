@@ -369,17 +369,6 @@ export default function Servicos() {
     return matchCategory && matchSearch;
   });
 
-  const filteredMapServices = useMemo(() => {
-    return mapServices.filter((s) => {
-      const matchCategory = activeCategory === "Todos" || s.category === activeCategory;
-      const matchSearch =
-        !searchTerm ||
-        s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.address.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchCategory && matchSearch;
-    });
-  }, [activeCategory, searchTerm]);
-
   const handleCategoryClick = (cat: string) => {
     setActiveCategory(cat);
     setFilterOpen(false);
@@ -395,8 +384,18 @@ export default function Servicos() {
     });
     markersRef.current = [];
 
+    // Filter map services by current selection
+    const mapFiltered = mapServices.filter((s) => {
+      const matchCategory = activeCategory === "Todos" || s.category === activeCategory;
+      const matchSearch =
+        !searchTerm ||
+        s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        s.address.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchCategory && matchSearch;
+    });
+
     // Add markers for filtered services
-    filteredMapServices.forEach((service) => {
+    mapFiltered.forEach((service) => {
       const marker = new google.maps.marker.AdvancedMarkerElement({
         map: mapRef.current,
         position: { lat: service.lat, lng: service.lng },
@@ -410,7 +409,7 @@ export default function Servicos() {
 
       markersRef.current.push(marker);
     });
-  }, [filteredMapServices]);
+  }, [activeCategory, searchTerm]);
 
   const handleMapReady = (map: google.maps.Map) => {
     mapRef.current = map;
@@ -544,9 +543,9 @@ export default function Servicos() {
       <section className="pt-28 lg:pt-36 pb-12 relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="/storage/vraboteni-luge.PNG"
+            src="/manus-storage/campo-comprido-novo-6_3322afb1.jpg"
             alt="Serviços do Campo Comprido"
-            className="w-full h-[400px] md:h-[480px] lg:h-[520px] object-cover object-center" loading="eager"
+            className="w-full h-full object-cover" loading="eager"
           />
           <div className="absolute inset-0 bg-black/50" />
         </div>
@@ -668,14 +667,6 @@ export default function Servicos() {
                 initialCenter={CAMPO_COMPRIDO_CENTER}
                 initialZoom={14}
                 onMapReady={handleMapReady}
-                fallbackMarkers={filteredMapServices.map((service) => ({
-                  id: service.id,
-                  title: service.name,
-                  subtitle: service.category,
-                  lat: service.lat,
-                  lng: service.lng,
-                  onClick: () => setSelectedService(service),
-                }))}
                 className="w-full h-full"
               />
               {/* Geolocation button */}

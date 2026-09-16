@@ -28,36 +28,6 @@ const carouselImages = [
     caption: "Um bairro que une natureza e urbanidade",
   },
   {
-    src: "/manus-storage/brt-canal-bus_ea471771.jpg",
-    alt: "Canaleta de ônibus do Campo Comprido",
-    caption: "Mobilidade que conecta o bairro todos os dias",
-  },
-  {
-    src: "/manus-storage/viaduto-orleans_754366df.jpg",
-    alt: "Viaduto do Orleans",
-    caption: "Referências urbanas que fazem parte da rotina local",
-  },
-  {
-    src: "/manus-storage/teatro-positivo-1_5a7c58e2.jpg",
-    alt: "Teatro Positivo",
-    caption: "Cultura e encontros ao lado do Campo Comprido",
-  },
-  {
-    src: "/manus-storage/teatro-positivo-2_1cf99b5e.jpg",
-    alt: "Teatro Positivo iluminado à noite",
-    caption: "A região também vive sua energia à noite",
-  },
-  {
-    src: "/manus-storage/corredor-ipes_ce61de2c.jpg",
-    alt: "Corredor de ônibus com ipês",
-    caption: "Ipês e caminhos que colorem a paisagem",
-  },
-  {
-    src: "/manus-storage/brt-corredor_17821a98.jpg",
-    alt: "Corredor BRT do Campo Comprido",
-    caption: "Transporte, movimento e vida urbana",
-  },
-  {
     src: "/manus-storage/viaduto-orleans_63d2e314.jpg",
     alt: "Campo Comprido - paisagem urbana",
     caption: "Parques, árvores e vida comunitária",
@@ -68,11 +38,6 @@ const carouselImages = [
     caption: "Onde moradia se encontra com qualidade de vida",
   },
   {
-    src: "/manus-storage/teatro-positivo-3_c945d009.jpg",
-    alt: "Interior do Teatro Positivo",
-    caption: "Espaços culturais que aproximam pessoas",
-  },
-  {
     src: "/manus-storage/corredor-ipes_e6474f5e.jpg",
     alt: "Skyline do Campo Comprido",
     caption: "O horizonte de um bairro em crescimento",
@@ -81,21 +46,6 @@ const carouselImages = [
     src: "/manus-storage/campo-comprido-aereo_9e4dd866.jpg",
     alt: "Lago e área verde do Campo Comprido",
     caption: "Áreas verdes que tornam o bairro especial",
-  },
-  {
-    src: "/manus-storage/viaduto-orleans-2_b8e6e47a.jpg",
-    alt: "Viaduto Orleans visto de outro ângulo",
-    caption: "O bairro visto por diferentes caminhos",
-  },
-  {
-    src: "/manus-storage/campo-comprido-aereo_4bb30e0b.jpg",
-    alt: "Campo Comprido visto de cima",
-    caption: "Campo Comprido visto de cima, com sua mistura de cidade e verde",
-  },
-  {
-    src: "/manus-storage/campo-comprido-novo-6_3322afb1.jpg",
-    alt: "Paisagem do Campo Comprido",
-    caption: "Serviços, moradia e natureza no mesmo território",
   },
 ];
 

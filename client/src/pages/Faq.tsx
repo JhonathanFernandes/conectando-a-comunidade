@@ -50,23 +50,15 @@ export default function Faq() {
       <Header />
 
       {/* Hero */}
-      <section className="pt-28 lg:pt-36 pb-12 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src="/manus-storage/corredor-ipes_ce61de2c.jpg"
-            alt="Corredor com ipês no Campo Comprido"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-black/55" />
-        </div>
-        <div className="container relative z-10">
-          <p className="text-white/70 font-medium text-sm uppercase tracking-widest mb-2">
+      <section className="pt-28 lg:pt-36 pb-12 bg-secondary relative">
+        <div className="container">
+          <p className="text-primary font-medium text-sm uppercase tracking-widest mb-2">
             Perguntas Frequentes
           </p>
-          <h1 className="font-serif text-3xl lg:text-5xl font-bold text-white mb-4">
+          <h1 className="font-serif text-3xl lg:text-5xl font-bold text-foreground mb-4">
             Tire suas dúvidas
           </h1>
-          <p className="text-white/80 text-lg max-w-2xl">
+          <p className="text-muted-foreground text-lg max-w-2xl">
             Encontre respostas sobre como usar a plataforma, fazer denúncias e participar da comunidade.
           </p>
         </div>
