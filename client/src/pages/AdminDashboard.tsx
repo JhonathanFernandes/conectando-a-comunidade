@@ -12,6 +12,7 @@ import {
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import AdminDemo from "./AdminDemo";
 
 const statusMap: Record<string, string> = {
   "pending": "Pendente",
@@ -37,7 +38,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export default function AdminDashboard() {
+function AuthenticatedAdminDashboard() {
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("comercios");
   const [searchTerm, setSearchTerm] = useState("");
@@ -470,4 +471,8 @@ export default function AdminDashboard() {
       </div>
     </div>
   );
+}
+
+export default function AdminDashboard() {
+  return import.meta.env.BASE_URL !== "/" ? <AdminDemo /> : <AuthenticatedAdminDashboard />;
 }
