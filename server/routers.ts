@@ -2,6 +2,8 @@ import { COOKIE_NAME } from "@shared/const";
 import { z } from "zod";
 import { eq, desc } from "drizzle-orm";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { ADMIN_COOKIE_NAME, ADMIN_SESSION_MS, adminCookieOptions, createAdminSession, passwordLoginConfigured, validAdminCredentials } from "./_core/adminPasswordAuth";
+import { TRPCError } from "@trpc/server";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, publicProcedure, router } from "./_core/trpc";
 import { getDb } from "./db";
@@ -26,13 +28,37 @@ import {
   deleteMuralPost as deleteMuralPostDb,
 } from "./db";
 
+const failedAdminLogins = new Map<string, { count: number; resetAt: number }>();
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
+    passwordLogin: publicProcedure
+      .input(z.object({ username: z.string().min(1).max(100), password: z.string().min(1).max(256) }))
+      .mutation(({ ctx, input }) => {
+        if (!passwordLoginConfigured()) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Login administrativo não configurado no servidor." });
+        }
+        const key = ctx.req.ip || ctx.req.socket.remoteAddress || "unknown";
+        const now = Date.now();
+        const previous = failedAdminLogins.get(key);
+        const attempts = previous && previous.resetAt > now ? previous : { count: 0, resetAt: now + 15 * 60 * 1000 };
+        if (attempts.count >= 5) {
+          throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Muitas tentativas. Aguarde 15 minutos." });
+        }
+        if (!validAdminCredentials(input.username, input.password)) {
+          failedAdminLogins.set(key, { ...attempts, count: attempts.count + 1 });
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Usuário ou senha inválidos." });
+        }
+        failedAdminLogins.delete(key);
+        ctx.res.cookie(ADMIN_COOKIE_NAME, createAdminSession(), { ...adminCookieOptions(ctx.req), maxAge: ADMIN_SESSION_MS });
+        return { success: true } as const;
+      }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      ctx.res.clearCookie(ADMIN_COOKIE_NAME, adminCookieOptions(ctx.req));
       return {
         success: true,
       } as const;

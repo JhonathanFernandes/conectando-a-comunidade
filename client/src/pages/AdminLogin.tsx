@@ -3,11 +3,27 @@ import { useLocation } from "wouter";
 import { Eye, EyeOff, LockKeyhole, Shield } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
+import { trpc } from "@/lib/trpc";
 
 function AuthenticatedAdminLogin() {
   const [, navigate] = useLocation();
   const { user, loading } = useAuth();
+  const utils = trpc.useUtils();
   const authConfigured = Boolean(import.meta.env.VITE_APP_ID && import.meta.env.VITE_OAUTH_PORTAL_URL);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const passwordLogin = trpc.auth.passwordLogin.useMutation({
+    onSuccess: async () => {
+      setPassword("");
+      await utils.auth.me.invalidate();
+      navigate("/admin/dashboard");
+    },
+    onError: (loginError) => {
+      setPassword("");
+      setError(loginError.message);
+    },
+  });
 
   useEffect(() => {
     if (user?.role === "admin") navigate("/admin/dashboard");
@@ -30,7 +46,18 @@ function AuthenticatedAdminLogin() {
             Entrar com conta autorizada
           </button>
         ) : (
-          <p className="mt-8 text-sm text-muted-foreground">O painel requer o servidor e a autenticação configurados.</p>
+          <form onSubmit={(event) => { event.preventDefault(); setError(""); passwordLogin.mutate({ username, password }); }} className="mt-6 space-y-4 text-left">
+            <label className="block text-sm font-medium text-foreground">Usuário
+              <input autoComplete="username" required value={username} onChange={(event) => setUsername(event.target.value)} className="mt-1.5 w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
+            </label>
+            <label className="block text-sm font-medium text-foreground">Senha
+              <input type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} className="mt-1.5 w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
+            </label>
+            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+            <button type="submit" disabled={passwordLogin.isPending} className="w-full rounded-lg bg-primary px-6 py-3 font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50">
+              {passwordLogin.isPending ? "Verificando..." : "Entrar no painel"}
+            </button>
+          </form>
         )}
         <button onClick={() => navigate("/")} className="mt-5 block w-full text-sm text-primary hover:underline">Voltar ao início</button>
       </div>

@@ -18,7 +18,11 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
-  startLogin();
+  if (import.meta.env.VITE_APP_ID && import.meta.env.VITE_OAUTH_PORTAL_URL) {
+    startLogin();
+  } else {
+    window.location.href = `${import.meta.env.BASE_URL}admin`;
+  }
 };
 
 queryClient.getQueryCache().subscribe(event => {
