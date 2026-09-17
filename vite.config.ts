@@ -213,7 +213,9 @@ function vitePluginMapsProxy(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector(), vitePluginMapsProxy()];
+const plugins = process.env.GITHUB_PAGES === "true"
+  ? [react(), tailwindcss()]
+  : [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector(), vitePluginMapsProxy()];
 
 export default defineConfig({
   plugins,

@@ -110,7 +110,7 @@ export default function Comercio() {
   }, [allReviews]);
 
   // Use real DB data, fallback to empty list while loading
-  const commerceList: CommerceItem[] = (dbCommerces || []).map((c) => ({
+  const dbCommerceList: CommerceItem[] = (dbCommerces || []).map((c) => ({
     id: c.id,
     name: c.name,
     category: c.category,
@@ -121,6 +121,7 @@ export default function Comercio() {
     description: c.description || "",
     lat: c.lat || undefined,
     lng: c.lng || undefined,
+    coordsJson: c.coordsJson,
   }));
   const commerceList: CommerceItem[] = [
     ...dbCommerceList,
@@ -348,7 +349,24 @@ export default function Comercio() {
 
           {/* Accordion: category groups (collapsed by default) */}
           <div className="space-y-4">
-            {orderedGroups.map((cat) => (
+            {dbLoading ? (
+              [1, 2, 3].map((item) => (
+                <div key={item} className="rounded-xl border border-border bg-card p-5 animate-pulse">
+                  <div className="h-5 bg-muted rounded w-40 mb-3" />
+                  <div className="h-4 bg-muted rounded w-64 max-w-full" />
+                </div>
+              ))
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-12">
+                <Globe className="w-16 h-16 mx-auto text-muted-foreground/40 mb-4" />
+                <h3 className="font-serif text-xl font-semibold text-foreground mb-2">
+                  Nenhum comércio encontrado
+                </h3>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  Ainda não há estabelecimentos aprovados para exibir nesta seleção.
+                </p>
+              </div>
+            ) : orderedGroups.map((cat) => (
               <div key={cat} className="rounded-xl border border-border bg-card overflow-hidden">
                 {/* Group header */}
                 <button
@@ -493,61 +511,6 @@ export default function Comercio() {
                 </AnimatePresence>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Mapa Interativo */}
-      <section className="py-10 lg:py-14 bg-card border-t border-border">
-        <div className="container">
-          <div className="flex items-center gap-3 mb-6">
-            <MapPin className="text-[oklch(0.72_0.12_40)]" size={24} />
-            <h2 className="font-serif text-2xl lg:text-3xl font-bold text-foreground">Mapa de Comércios</h2>
-          </div>
-          <div className="rounded-2xl overflow-hidden border border-border shadow-lg">
-            <MapView
-              className="h-[450px]"
-              initialCenter={{ lat: -25.4270, lng: -49.3180 }}
-              initialZoom={15}
-              onMapReady={(map) => {
-                mapRef.current = map;
-                // Add one pin per commerce (filtered)
-                filtered.forEach((item) => {
-                  const lat = parseFloat(item.lat || "0");
-                  const lng = parseFloat(item.lng || "0");
-                  if (!lat || !lng) return;
-                  const marker = new google.maps.marker.AdvancedMarkerElement({
-                    map,
-                    position: { lat, lng },
-                    title: item.name,
-                  });
-                  marker.addListener("click", () => {
-                    const infoWindow = new google.maps.InfoWindow({
-                      content: `
-                        <div style="max-width:260px;padding:8px;">
-                          <p style="font-weight:bold;margin:0;font-size:14px;">${item.name}</p>
-                          <p style="margin:2px 0 0;font-size:12px;color:#666;">${item.category}</p>
-                          <p style="margin:2px 0;font-size:12px;">${item.address}</p>
-                          <p style="margin:0;font-size:12px;">📞 ${item.phone}</p>
-                        </div>
-                      `,
-                    });
-                    infoWindow.open({ anchor: marker, map });
-                  });
-                });
-                // Fit bounds
-                const bounds = new google.maps.LatLngBounds();
-                filtered.forEach((item) => {
-                  const lat = parseFloat(item.lat || "0");
-                  const lng = parseFloat(item.lng || "0");
-                  if (lat && lng) bounds.extend({ lat, lng });
-                });
-                if (!bounds.isEmpty()) {
-                  map.fitBounds(bounds);
-                  if (map.getZoom()! > 16) map.setZoom(16);
-                }
-              }}
-            />
           </div>
         </div>
       </section>
