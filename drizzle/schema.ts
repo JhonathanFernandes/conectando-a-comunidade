@@ -1,24 +1,29 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { integer, pgEnum, pgTable, serial, text, timestamp, varchar } from "drizzle-orm/pg-core";
+
+export const userRole = pgEnum("user_role", ["user", "admin"]);
+export const approvalStatus = pgEnum("approval_status", ["pending", "approved", "rejected"]);
+export const resolutionStatus = pgEnum("resolution_status", ["pending", "resolved", "rejected"]);
+export const reviewTargetType = pgEnum("review_target_type", ["commerce", "service"]);
 
 /**
  * Core user table backing auth flow.
  * Extend this file with additional tables as your product grows.
  * Columns use camelCase to match both database fields and generated types.
  */
-export const users = mysqlTable("users", {
+export const users = pgTable("users", {
   /**
    * Surrogate primary key. Auto-incremented numeric value managed by the database.
    * Use this for relations between tables.
    */
-  id: int("id").autoincrement().primaryKey(),
+  id: serial("id").primaryKey(),
   /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  role: userRole("role").default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
 });
 
@@ -27,8 +32,8 @@ export type InsertUser = typeof users.$inferInsert;
 
 // === Tabelas do projeto Campo Comprido ===
 
-export const commerces = mysqlTable("commerces", {
-  id: int("id").autoincrement().primaryKey(),
+export const commerces = pgTable("commerces", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   category: varchar("category", { length: 100 }).notNull(),
   address: varchar("address", { length: 255 }).notNull(),
@@ -41,34 +46,34 @@ export const commerces = mysqlTable("commerces", {
   coordsJson: text("coordsJson"),
   photoUrl: text("photoUrl"),
   photoKey: varchar("photoKey", { length: 255 }),
-  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  status: approvalStatus("status").default("pending").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
-export const complaints = mysqlTable("complaints", {
-  id: int("id").autoincrement().primaryKey(),
+export const complaints = pgTable("complaints", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   phone: varchar("phone", { length: 50 }),
   type: varchar("type", { length: 100 }).notNull(),
   address: varchar("address", { length: 255 }),
   description: text("description").notNull(),
-  status: mysqlEnum("status", ["pending", "resolved", "rejected"]).default("pending").notNull(),
+  status: resolutionStatus("status").default("pending").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
-export const suggestions = mysqlTable("suggestions", {
-  id: int("id").autoincrement().primaryKey(),
+export const suggestions = pgTable("suggestions", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 320 }),
   phone: varchar("phone", { length: 50 }),
   type: varchar("type", { length: 100 }).notNull(),
   message: text("message").notNull(),
-  status: mysqlEnum("status", ["pending", "resolved", "rejected"]).default("pending").notNull(),
+  status: resolutionStatus("status").default("pending").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
-export const events = mysqlTable("events", {
-  id: int("id").autoincrement().primaryKey(),
+export const events = pgTable("events", {
+  id: serial("id").primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),
   category: varchar("category", { length: 100 }).notNull(),
   date: varchar("date", { length: 100 }),
@@ -80,8 +85,8 @@ export const events = mysqlTable("events", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
-export const usefulPhones = mysqlTable("usefulPhones", {
-  id: int("id").autoincrement().primaryKey(),
+export const usefulPhones = pgTable("usefulPhones", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   category: varchar("category", { length: 100 }),
   phone: varchar("phone", { length: 50 }).notNull(),
@@ -92,13 +97,13 @@ export const usefulPhones = mysqlTable("usefulPhones", {
 
 // === Reviews (avaliações com estrelas igual Google) ===
 
-export const reviews = mysqlTable("reviews", {
-  id: int("id").autoincrement().primaryKey(),
+export const reviews = pgTable("reviews", {
+  id: serial("id").primaryKey(),
   authorName: varchar("authorName", { length: 255 }).notNull(),
-  targetType: mysqlEnum("targetType", ["commerce", "service"]).notNull(),
-  targetId: int("targetId").notNull(),
+  targetType: reviewTargetType("targetType").notNull(),
+  targetId: integer("targetId").notNull(),
   targetName: varchar("targetName", { length: 255 }).notNull(),
-  rating: int("rating").notNull(),
+  rating: integer("rating").notNull(),
   comment: text("comment"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
@@ -108,12 +113,12 @@ export type InsertReview = typeof reviews.$inferInsert;
 
 // === Mural da Comunidade ===
 
-export const muralPosts = mysqlTable("muralPosts", {
-  id: int("id").autoincrement().primaryKey(),
+export const muralPosts = pgTable("muralPosts", {
+  id: serial("id").primaryKey(),
   authorName: varchar("authorName", { length: 255 }).notNull(),
   category: varchar("category", { length: 100 }).default("Geral"),
   message: text("message").notNull(),
-  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  status: approvalStatus("status").default("pending").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
