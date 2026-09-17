@@ -114,3 +114,4 @@ temp/
 client/public/__manus__/version.json
 .project-config.json
 client/public/__manus__/debug-collector.js
+.vercel
