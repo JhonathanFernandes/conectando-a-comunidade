@@ -87,7 +87,7 @@ export default function Comercio() {
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState("");
 
-  const { data: allReviews } = trpc.review.listAll.useQuery({ targetType: "commerce" });
+  const { data: allReviews, refetch: refetchAllReviews } = trpc.review.listAll.useQuery({ targetType: "commerce" });
   const { data: reviewsData, refetch: refetchReviews } = trpc.review.listByTarget.useQuery(
     { targetType: "commerce", targetId: reviewTarget?.id ?? 0 },
     { enabled: reviewTarget !== null }
@@ -137,6 +137,7 @@ export default function Comercio() {
       setReviewRating(0);
       setReviewComment("");
       refetchReviews();
+      refetchAllReviews();
     },
     onError: () => toast.error("Erro ao enviar avaliação"),
   });

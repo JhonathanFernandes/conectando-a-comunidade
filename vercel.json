@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "pnpm exec drizzle-kit migrate && pnpm exec vite build",
+  "outputDirectory": "dist/public",
+  "rewrites": [
+    { "source": "/api/:route*", "destination": "/api/index?route=:route*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

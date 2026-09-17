@@ -39,11 +39,17 @@ jobs:
           pnpm check
           pnpm test
 
-      - name: Build static app
-        run: GITHUB_PAGES=true pnpm build
+      - name: Check published API before redirecting visitors
+        env:
+          PUBLIC_APP_URL: ${{ vars.PUBLIC_APP_URL }}
+        run: |
+          test -n "$PUBLIC_APP_URL"
+          curl --fail --silent --show-error --location --retry 3 --retry-delay 5 --max-time 60 "${PUBLIC_APP_URL%/}/api/trpc/complaint.listPublic" > /dev/null
 
-      - name: Support direct links to pages
-        run: cp dist/public/index.html dist/public/404.html
+      - name: Redirect to the application with database
+        env:
+          PUBLIC_APP_URL: ${{ vars.PUBLIC_APP_URL }}
+        run: node scripts/build-pages-redirect.mjs
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

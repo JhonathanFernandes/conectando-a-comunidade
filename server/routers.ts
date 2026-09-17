@@ -99,7 +99,7 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new Error("Database not available");
-        await db.insert(commerces).values({ ...input, status: "pending" });
+        await db.insert(commerces).values({ ...input, status: "approved" });
         return { success: true };
       }),
     uploadPhoto: publicProcedure
@@ -123,6 +123,13 @@ export const appRouter = router({
         await db.update(commerces).set({ status: input.status }).where(eq(commerces.id, input.id));
         return { success: true };
       }),
+    update: adminProcedure.input(z.object({ id: z.number(), name: z.string().min(1), category: z.string().min(1), address: z.string().min(1), phone: z.string().min(1), description: z.string().optional() })).mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const { id, ...values } = input;
+      await db.update(commerces).set(values).where(eq(commerces.id, id));
+      return { success: true };
+    }),
     delete: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
@@ -135,6 +142,11 @@ export const appRouter = router({
 
   // === Denúncias ===
   complaint: router({
+    listPublic: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      return db.select({ id: complaints.id, name: complaints.name, type: complaints.type, address: complaints.address, description: complaints.description, status: complaints.status, createdAt: complaints.createdAt }).from(complaints).orderBy(desc(complaints.createdAt));
+    }),
     list: adminProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
@@ -164,6 +176,13 @@ export const appRouter = router({
         await db.update(complaints).set({ status: input.status }).where(eq(complaints.id, input.id));
         return { success: true };
       }),
+    update: adminProcedure.input(z.object({ id: z.number(), type: z.string().min(1), address: z.string().optional(), description: z.string().min(1) })).mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const { id, ...values } = input;
+      await db.update(complaints).set(values).where(eq(complaints.id, id));
+      return { success: true };
+    }),
     delete: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
@@ -176,6 +195,11 @@ export const appRouter = router({
 
   // === Sugestões ===
   suggestion: router({
+    listPublic: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      return db.select({ id: suggestions.id, type: suggestions.type, message: suggestions.message, status: suggestions.status, createdAt: suggestions.createdAt }).from(suggestions).orderBy(desc(suggestions.createdAt));
+    }),
     list: adminProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
@@ -205,6 +229,13 @@ export const appRouter = router({
         await db.update(suggestions).set({ status: input.status }).where(eq(suggestions.id, input.id));
         return { success: true };
       }),
+    update: adminProcedure.input(z.object({ id: z.number(), type: z.string().min(1), message: z.string().min(1) })).mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const { id, ...values } = input;
+      await db.update(suggestions).set(values).where(eq(suggestions.id, id));
+      return { success: true };
+    }),
     delete: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
@@ -241,6 +272,13 @@ export const appRouter = router({
         await db.insert(events).values(input);
         return { success: true };
       }),
+    update: adminProcedure.input(z.object({ id: z.number(), title: z.string().min(1), category: z.string().min(1), date: z.string().optional(), time: z.string().optional(), location: z.string().optional(), organizer: z.string().optional(), description: z.string().optional() })).mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const { id, ...values } = input;
+      await db.update(events).set(values).where(eq(events.id, id));
+      return { success: true };
+    }),
     delete: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
@@ -274,6 +312,13 @@ export const appRouter = router({
         await db.insert(usefulPhones).values(input);
         return { success: true };
       }),
+    update: adminProcedure.input(z.object({ id: z.number(), name: z.string().min(1), category: z.string().optional(), phone: z.string().min(1), address: z.string().optional(), hours: z.string().optional() })).mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const { id, ...values } = input;
+      await db.update(usefulPhones).set(values).where(eq(usefulPhones.id, id));
+      return { success: true };
+    }),
     delete: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
@@ -295,7 +340,7 @@ export const appRouter = router({
       .input(z.object({ targetType: z.enum(["commerce", "service"]).optional() }))
       .query(async ({ input }) => {
         if (input.targetType) return await getAllReviewsDb(input.targetType);
-        return await getAllReviewsDb("commerce");
+        return await getAllReviewsDb();
       }),
     add: publicProcedure
       .input(
@@ -318,6 +363,13 @@ export const appRouter = router({
         await deleteReviewDb(input.id);
         return { success: true };
       }),
+    update: adminProcedure.input(z.object({ id: z.number(), authorName: z.string().min(1), rating: z.number().min(1).max(5), comment: z.string().optional() })).mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const { id, ...values } = input;
+      await db.update(reviews).set(values).where(eq(reviews.id, id));
+      return { success: true };
+    }),
   }),
 
   // === Mural da Comunidade ===
@@ -350,6 +402,13 @@ export const appRouter = router({
         await updateMuralPostStatusDb(input.id, input.status);
         return { success: true };
       }),
+    update: adminProcedure.input(z.object({ id: z.number(), authorName: z.string().min(1), category: z.string().optional(), message: z.string().min(1) })).mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const { id, ...values } = input;
+      await db.update(muralPosts).set(values).where(eq(muralPosts.id, id));
+      return { success: true };
+    }),
     delete: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {

@@ -7,7 +7,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useLocation } from "wouter";
 import {
   Shield, LogOut, Store, AlertTriangle, HelpCircle, Phone, Calendar,
-  Users, MapPin, Trash2, Eye, Search, Filter, Download, Bell, Clock, MessageCircle, Star
+  Users, MapPin, Trash2, Eye, Search, Filter, Download, Bell, Clock, MessageCircle, Star, Pencil
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -37,10 +37,22 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+type EditKind = "comercios" | "denuncias" | "sugestoes" | "telefones" | "eventos" | "mural" | "avaliacoes";
+const editFields: Record<EditKind, { key: string; label: string }[]> = {
+  comercios: [{ key: "name", label: "Nome" }, { key: "category", label: "Categoria" }, { key: "address", label: "Endereço" }, { key: "phone", label: "Telefone" }, { key: "description", label: "Descrição" }],
+  denuncias: [{ key: "type", label: "Tipo" }, { key: "address", label: "Local" }, { key: "description", label: "Descrição" }],
+  sugestoes: [{ key: "type", label: "Tipo" }, { key: "message", label: "Mensagem" }],
+  telefones: [{ key: "name", label: "Nome" }, { key: "category", label: "Categoria" }, { key: "phone", label: "Número" }, { key: "address", label: "Endereço" }, { key: "hours", label: "Horário" }],
+  eventos: [{ key: "title", label: "Título" }, { key: "category", label: "Categoria" }, { key: "date", label: "Data" }, { key: "time", label: "Horário" }, { key: "location", label: "Local" }, { key: "organizer", label: "Organizador" }, { key: "description", label: "Descrição" }],
+  mural: [{ key: "authorName", label: "Autor" }, { key: "category", label: "Categoria" }, { key: "message", label: "Mensagem" }],
+  avaliacoes: [{ key: "authorName", label: "Autor" }, { key: "rating", label: "Estrelas (1 a 5)" }, { key: "comment", label: "Comentário" }],
+};
+
 function AuthenticatedAdminDashboard() {
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("comercios");
   const [searchTerm, setSearchTerm] = useState("");
+  const [editing, setEditing] = useState<{ kind: EditKind; id: number; values: Record<string, string> } | null>(null);
   const { user, loading, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const isAdmin = user?.role === "admin";
@@ -49,8 +61,8 @@ function AuthenticatedAdminDashboard() {
   const { data: comerciosData, refetch: refetchComercios } = trpc.commerce.list.useQuery(undefined, { enabled: isAdmin });
   const { data: denunciasData, refetch: refetchDenuncias } = trpc.complaint.list.useQuery(undefined, { enabled: isAdmin });
   const { data: sugestoesData, refetch: refetchSugestoes } = trpc.suggestion.list.useQuery(undefined, { enabled: isAdmin });
-  const { data: telefonesData } = trpc.phone.list.useQuery();
-  const { data: eventosData } = trpc.event.list.useQuery();
+  const { data: telefonesData, refetch: refetchPhones } = trpc.phone.list.useQuery();
+  const { data: eventosData, refetch: refetchEvents } = trpc.event.list.useQuery();
   const { data: muralData, refetch: refetchMural } = trpc.mural.listAll.useQuery(undefined, { enabled: isAdmin });
   const { data: reviewsData, refetch: refetchReviews } = trpc.review.listAll.useQuery({});
 
@@ -65,6 +77,41 @@ function AuthenticatedAdminDashboard() {
   const rejectMuralMutation = trpc.mural.updateStatus.useMutation({ onSuccess: () => refetchMural() });
   const deleteMuralMutation = trpc.mural.delete.useMutation({ onSuccess: () => refetchMural() });
   const deleteReviewMutation = trpc.review.delete.useMutation({ onSuccess: () => refetchReviews() });
+  const deletePhoneMutation = trpc.phone.delete.useMutation({ onSuccess: () => refetchPhones() });
+  const deleteEventMutation = trpc.event.delete.useMutation({ onSuccess: () => refetchEvents() });
+  const updateCommerce = trpc.commerce.update.useMutation();
+  const updateComplaint = trpc.complaint.update.useMutation();
+  const updateSuggestion = trpc.suggestion.update.useMutation();
+  const updatePhone = trpc.phone.update.useMutation();
+  const updateEvent = trpc.event.update.useMutation();
+  const updateMural = trpc.mural.update.useMutation();
+  const updateReview = trpc.review.update.useMutation();
+
+  const startEdit = (kind: EditKind, item: { id: number }) => {
+    const record = Object.fromEntries(Object.entries(item).map(([key, value]) => [key, String(value ?? "")])) as Record<string, string>;
+    setEditing({ kind, id: item.id, values: record });
+  };
+
+  const saveEdit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!editing) return;
+    const { id, kind, values } = editing;
+    try {
+      switch (kind) {
+        case "comercios": await updateCommerce.mutateAsync({ id, name: values.name, category: values.category, address: values.address, phone: values.phone, description: values.description }); await refetchComercios(); break;
+        case "denuncias": await updateComplaint.mutateAsync({ id, type: values.type, address: values.address, description: values.description }); await refetchDenuncias(); break;
+        case "sugestoes": await updateSuggestion.mutateAsync({ id, type: values.type, message: values.message }); await refetchSugestoes(); break;
+        case "telefones": await updatePhone.mutateAsync({ id, name: values.name, category: values.category, phone: values.phone, address: values.address, hours: values.hours }); await refetchPhones(); break;
+        case "eventos": await updateEvent.mutateAsync({ id, title: values.title, category: values.category, date: values.date, time: values.time, location: values.location, organizer: values.organizer, description: values.description }); await refetchEvents(); break;
+        case "mural": await updateMural.mutateAsync({ id, authorName: values.authorName, category: values.category, message: values.message }); await refetchMural(); break;
+        case "avaliacoes": await updateReview.mutateAsync({ id, authorName: values.authorName, rating: Number(values.rating), comment: values.comment }); await refetchReviews(); break;
+      }
+      setEditing(null);
+      toast.success("Alterações salvas no banco de dados.");
+    } catch {
+      toast.error("Não foi possível salvar as alterações.");
+    }
+  };
 
   const tabs = [
     { id: "comercios", label: "Comércios", icon: <Store className="w-4 h-4" />, count: comerciosData?.length ?? 0 },
@@ -199,8 +246,8 @@ function AuthenticatedAdminDashboard() {
                       <td className="px-4 py-3 text-muted-foreground">{item.createdAt?.toLocaleDateString("pt-BR")}</td>
                       <td className="px-4 py-3">
                         <div className="flex gap-1">
-                          <button onClick={() => toast.success(`Visualizando: ${item.name}`)} className="p-1.5 rounded hover:bg-muted" title="Visualizar">
-                            <Eye className="w-4 h-4 text-muted-foreground" />
+                          <button onClick={() => startEdit("comercios", item)} className="p-1.5 rounded hover:bg-muted" title="Editar">
+                            <Pencil className="w-4 h-4 text-muted-foreground" />
                           </button>
                           <button onClick={() => { approveMutation.mutate({ id: item.id, status: "approved" }); toast.success(`Aprovado: ${item.name}`); }} className="p-1.5 rounded hover:bg-green-50" title="Aprovar">
                             <span className="text-green-600 text-xs font-bold">✓</span>
@@ -241,8 +288,8 @@ function AuthenticatedAdminDashboard() {
                       <td className="px-4 py-3 text-muted-foreground">{item.createdAt?.toLocaleDateString("pt-BR")}</td>
                       <td className="px-4 py-3">
                         <div className="flex gap-1">
-                          <button onClick={() => toast.success(`Visualizando denúncia: ${item.id}`)} className="p-1.5 rounded hover:bg-muted">
-                            <Eye className="w-4 h-4 text-muted-foreground" />
+                          <button onClick={() => startEdit("denuncias", item)} className="p-1.5 rounded hover:bg-muted" title="Editar">
+                            <Pencil className="w-4 h-4 text-muted-foreground" />
                           </button>
                           <button onClick={() => { resolveDenunciaMutation.mutate({ id: item.id, status: "resolved" }); toast.success(`Resolvida: ${item.id}`); }} className="p-1.5 rounded hover:bg-green-50">
                             <span className="text-green-600 text-xs font-bold">✓</span>
@@ -283,8 +330,8 @@ function AuthenticatedAdminDashboard() {
                       <td className="px-4 py-3 text-muted-foreground">{item.createdAt?.toLocaleDateString("pt-BR")}</td>
                       <td className="px-4 py-3">
                         <div className="flex gap-1">
-                          <button onClick={() => toast.success(`Visualizando: ${item.name}`)} className="p-1.5 rounded hover:bg-muted">
-                            <Eye className="w-4 h-4 text-muted-foreground" />
+                          <button onClick={() => startEdit("sugestoes", item)} className="p-1.5 rounded hover:bg-muted" title="Editar">
+                            <Pencil className="w-4 h-4 text-muted-foreground" />
                           </button>
                           <button onClick={() => { resolveSugestaoMutation.mutate({ id: item.id, status: "resolved" }); toast.success(`Resolvida: ${item.id}`); }} className="p-1.5 rounded hover:bg-green-50">
                             <span className="text-green-600 text-xs font-bold">✓</span>
@@ -321,10 +368,10 @@ function AuthenticatedAdminDashboard() {
                       <td className="px-4 py-3">{item.category || "-"}</td>
                       <td className="px-4 py-3">
                         <div className="flex gap-1">
-                          <button onClick={() => toast.success(`Editando: ${item.name}`)} className="p-1.5 rounded hover:bg-muted">
-                            <Eye className="w-4 h-4 text-muted-foreground" />
+                          <button onClick={() => startEdit("telefones", item)} className="p-1.5 rounded hover:bg-muted" title="Editar">
+                            <Pencil className="w-4 h-4 text-muted-foreground" />
                           </button>
-                          <button onClick={() => toast.error(`Removido: ${item.name}`)} className="p-1.5 rounded hover:bg-red-50">
+                          <button onClick={() => { deletePhoneMutation.mutate({ id: item.id }); toast.success(`Removido: ${item.name}`); }} className="p-1.5 rounded hover:bg-red-50" title="Remover">
                             <Trash2 className="w-4 h-4 text-red-400" />
                           </button>
                         </div>
@@ -362,10 +409,10 @@ function AuthenticatedAdminDashboard() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-1">
-                          <button onClick={() => toast.success(`Visualizando: ${item.title}`)} className="p-1.5 rounded hover:bg-muted">
-                            <Eye className="w-4 h-4 text-muted-foreground" />
+                          <button onClick={() => startEdit("eventos", item)} className="p-1.5 rounded hover:bg-muted" title="Editar">
+                            <Pencil className="w-4 h-4 text-muted-foreground" />
                           </button>
-                          <button onClick={() => toast.error(`Removido: ${item.title}`)} className="p-1.5 rounded hover:bg-red-50">
+                          <button onClick={() => { deleteEventMutation.mutate({ id: item.id }); toast.success(`Removido: ${item.title}`); }} className="p-1.5 rounded hover:bg-red-50" title="Remover">
                             <Trash2 className="w-4 h-4 text-red-400" />
                           </button>
                         </div>
@@ -411,6 +458,7 @@ function AuthenticatedAdminDashboard() {
                               </button>
                             </>
                           )}
+                          <button onClick={() => startEdit("mural", item)} className="p-1.5 rounded hover:bg-muted" title="Editar"><Pencil className="w-4 h-4 text-muted-foreground" /></button>
                           <button onClick={() => { deleteMuralMutation.mutate({ id: item.id }); toast.error("Removido."); }} className="p-1.5 rounded hover:bg-red-50" title="Remover">
                             <Trash2 className="w-4 h-4 text-red-400" />
                           </button>
@@ -455,6 +503,7 @@ function AuthenticatedAdminDashboard() {
                       <td className="px-4 py-3 text-muted-foreground">{item.createdAt?.toLocaleDateString("pt-BR")}</td>
                       <td className="px-4 py-3">
                         <div className="flex gap-1">
+                          <button onClick={() => startEdit("avaliacoes", item)} className="p-1.5 rounded hover:bg-muted" title="Editar"><Pencil className="w-4 h-4 text-muted-foreground" /></button>
                           <button onClick={() => { deleteReviewMutation.mutate({ id: item.id }); toast.error("Avaliação removida."); }} className="p-1.5 rounded hover:bg-red-50" title="Remover">
                             <Trash2 className="w-4 h-4 text-red-400" />
                           </button>
@@ -468,6 +517,28 @@ function AuthenticatedAdminDashboard() {
           )}
         </div>
       </div>
+      {editing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-label="Editar registro">
+          <form onSubmit={saveEdit} className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl bg-card p-6 text-foreground shadow-xl">
+            <h2 className="font-serif text-xl font-semibold mb-4">Editar registro</h2>
+            <div className="space-y-3">
+              {editFields[editing.kind].map(({ key, label }) => (
+                <label key={key} className="block text-sm font-medium">{label}
+                  {key === "description" || key === "message" || key === "comment" ? (
+                    <textarea className="mt-1 w-full rounded-lg border border-border bg-background p-2" rows={4} value={editing.values[key] ?? ""} onChange={(event) => setEditing({ ...editing, values: { ...editing.values, [key]: event.target.value } })} />
+                  ) : (
+                    <input className="mt-1 w-full rounded-lg border border-border bg-background p-2" required={!["address", "hours", "date", "time", "organizer", "description", "category"].includes(key)} type={key === "rating" ? "number" : "text"} min={key === "rating" ? 1 : undefined} max={key === "rating" ? 5 : undefined} value={editing.values[key] ?? ""} onChange={(event) => setEditing({ ...editing, values: { ...editing.values, [key]: event.target.value } })} />
+                  )}
+                </label>
+              ))}
+            </div>
+            <div className="mt-5 flex justify-end gap-3">
+              <button type="button" onClick={() => setEditing(null)} className="rounded-lg border border-border px-4 py-2">Cancelar</button>
+              <button type="submit" className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">Salvar alterações</button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

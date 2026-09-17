@@ -20,7 +20,7 @@ export default function Mural() {
   const { data: posts, isLoading, refetch } = trpc.mural.listApproved.useQuery();
   const addPostMutation = trpc.mural.add.useMutation({
     onSuccess: () => {
-      toast.success("Mensagem enviada! Aguardando aprovação do administrador.");
+      toast.success("Mensagem publicada para a comunidade.");
       setAuthorName("");
       setMessage("");
       refetch();
@@ -141,7 +141,7 @@ export default function Mural() {
             {lastSubmission && (
               <div className="bg-[oklch(0.92_0.03_80)] dark:bg-[oklch(0.28_0.02_160)] border border-[oklch(0.72_0.12_40)]/30 rounded-xl p-4 mb-4 text-sm text-foreground">
                 <MessageCircle className="w-4 h-4 inline mr-2 text-[oklch(0.72_0.12_40)]" />
-                Sua mensagem foi enviada e está aguardando aprovação do administrador. Obrigado por participar, {lastSubmission}!
+                Sua mensagem está visível para a comunidade. Obrigado por participar, {lastSubmission}!
               </div>
             )}
 
@@ -158,9 +158,9 @@ export default function Mural() {
             ) : allPosts.length === 0 ? (
               <div className="text-center py-12">
                 <MessageCircle className="w-16 h-16 mx-auto text-muted-foreground/40 mb-4" />
-                <h3 className="font-serif text-xl font-semibold text-foreground mb-2">Nenhuma mensagem aprovada ainda</h3>
+                <h3 className="font-serif text-xl font-semibold text-foreground mb-2">Nenhuma mensagem publicada ainda</h3>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                  Seja o primeiro vizinho a publicar no mural! Sua mensagem aparecerá após aprovação do administrador.
+                  Seja o primeiro vizinho a publicar no mural!
                 </p>
               </div>
             ) : (

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WaveDivider from "@/components/WaveDivider";
+import { trpc } from "@/lib/trpc";
 
 // Categorias agrupadas
 const categoryGroups = [
@@ -47,18 +48,18 @@ interface Event {
 
 const categoryOptions = ["Feiras", "Festas", "Culturais", "Esportivos", "Cursos", "Saúde", "Ações Sociais"];
 
-const events: Event[] = [
-  { id: 1, title: "Feira de Orgânicos do Campo Comprido", category: "Feiras", date: "Sábado, 20/07/2026", time: "08h-13h", location: "Av. Prefeito Omar Sabbag, 1200 - Campo Comprido", organizer: "Associação de Moradores", description: "Feira semanal com produtos frescos e artesanais do bairro.", attendees: "500+ participantes" },
-  { id: 2, title: "Campeonato de Futebol Amador", category: "Esportivos", date: "Domingo, 21/07/2026", time: "09h-17h", location: "Campo da Rua Deputado Heitor Alencar Furtado - Campo Comprido", organizer: "Liga do Campo Comprido", description: "Rodada final do campeonato entre equipes do bairro." },
-  { id: 3, title: "Festa Junina Comunitária", category: "Festas", date: "Sexta, 26/07/2026", time: "18h-23h", location: "Parque Barigui - Área Campo Comprido", organizer: "Conselho Comunitário", description: "Quadrilha, comidas típicas e música ao vivo." },
-  { id: 4, title: "Curso de Informática Básica", category: "Cursos", date: "Terça a Quinta, 16-18/07/2026", time: "14h-17h", location: "CRAS Campo Comprido - Av. João Gualberto", organizer: "Prefeitura de Curitiba", description: "Aulas gratuitas de informática para idosos e jovens." },
-  { id: 5, title: "Campanha de Vacinação", category: "Saúde", date: "Segunda, 22/07/2026", time: "08h-16h", location: "UBS Campo Comprido - Av. Prefeito Omar Sabbag", organizer: "Secretaria Municipal de Saúde", description: "Vacinação contra gripe para toda a comunidade." },
-  { id: 6, title: "Reunião do Conselho Comunitário", category: "Culturais", date: "Quarta, 24/07/2026", time: "19h", location: "CRAS Campo Comprido - Sala de Reuniões", organizer: "Conselho Comunitário", description: "Discussão sobre melhorias na iluminação e segurança." },
-  { id: 7, title: "Ação Social: Doação de Roupas", category: "Ações Sociais", date: "Sábado, 27/07/2026", time: "10h-15h", location: "Av. Prefeito Omar Sabbag, 1200 - Campo Comprido", organizer: "Voluntários do Campo Comprido", description: "Arrecadação e distribuição de roupas para famílias em necessidade.", attendees: "30+ voluntários" },
-  { id: 8, title: "Caminhada pela Saúde", category: "Saúde", date: "Domingo, 28/07/2026", time: "07h", location: "Parque Barigui - Campo Comprido", organizer: "Grupo de Saúde Comunitária", description: "Caminhada matinal de 5km com profissionais de saúde.", attendees: "100+ participantes" },
-];
-
 export default function Eventos() {
+  const { data: dbEvents, refetch } = trpc.event.list.useQuery();
+  const events: Event[] = (dbEvents ?? []).map((event) => ({ ...event, date: event.date ?? "", time: event.time ?? "", location: event.location ?? "", organizer: event.organizer ?? "", description: event.description ?? "", attendees: event.attendees ?? undefined }));
+  const addEvent = trpc.event.add.useMutation({
+    onSuccess: () => {
+      toast.success("Evento publicado e salvo para toda a comunidade.");
+      setNewEvent({ title: "", category: "", date: "", time: "", location: "", organizer: "", description: "" });
+      setShowForm(false);
+      refetch();
+    },
+    onError: () => toast.error("Não foi possível salvar o evento."),
+  });
   const [activeCategory, setActiveCategory] = useState("Todos");
   const [filterOpen, setFilterOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -73,14 +74,7 @@ export default function Eventos() {
       toast.error("Preencha pelo menos título, data e local.");
       return;
     }
-    // In production, this would send to backend via tRPC
-    // For now, store in localStorage and notify admin
-    const saved = JSON.parse(localStorage.getItem("user_events") || "[]");
-    saved.push({ ...newEvent, id: Date.now(), attendees: undefined });
-    localStorage.setItem("user_events", JSON.stringify(saved));
-    toast.success("Evento cadastrado! O administrador será notificado.");
-    setNewEvent({ title: "", category: "", date: "", time: "", location: "", organizer: "", description: "" });
-    setShowForm(false);
+    addEvent.mutate({ ...newEvent, category: newEvent.category || "Outros" });
   };
 
   // Fechar dropdown ao clicar fora
@@ -300,6 +294,7 @@ export default function Eventos() {
 
           {/* Events list */}
           <div className="space-y-4">
+            {filtered.length === 0 && <p className="rounded-xl border border-border bg-card p-6 text-muted-foreground">Nenhum evento cadastrado nesta categoria.</p>}
             {filtered.map((event) => (
               <div
                 key={event.id}

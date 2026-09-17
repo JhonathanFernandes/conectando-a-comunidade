@@ -4,7 +4,7 @@ import { photoUrl } from "@/data/photos";
  * Terracota como cor de ação principal, formulário orgânico
  */
 import { useState } from "react";
-import { AlertTriangle, MapPin, Upload, Send, ChevronDown } from "lucide-react";
+import { AlertTriangle, MapPin, Send, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import Header from "@/components/Header";
@@ -29,12 +29,14 @@ const categories = [
 ];
 
 export default function Denuncias() {
+  const { data: publicComplaints, refetch } = trpc.complaint.listPublic.useQuery();
   const [showForm, setShowForm] = useState(false);
   const [formCategory, setFormCategory] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formAddress, setFormAddress] = useState("");
   const [formNeighborhood, setFormNeighborhood] = useState("Campo Comprido");
   const [formAnonymous, setFormAnonymous] = useState(true);
+  const [formName, setFormName] = useState("");
 
   const reportMutation = trpc.complaint.add.useMutation({
     onSuccess: () => {
@@ -43,6 +45,8 @@ export default function Denuncias() {
       setFormCategory("");
       setFormDescription("");
       setFormAddress("");
+      setFormName("");
+      refetch();
     },
     onError: () => {
       toast.error("Erro ao registrar denúncia. Tente novamente.");
@@ -51,12 +55,12 @@ export default function Denuncias() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formCategory || !formDescription || !formAddress) {
+    if (!formCategory || !formDescription || !formAddress || (!formAnonymous && !formName.trim())) {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
     reportMutation.mutate({
-      name: formAnonymous ? "Anônimo" : "Morador",
+      name: formAnonymous ? "Anônimo" : formName.trim(),
       phone: undefined,
       type: formCategory,
       address: `${formAddress} — ${formNeighborhood}`,
@@ -124,6 +128,7 @@ export default function Denuncias() {
                 </h3>
               </div>
               <form onSubmit={handleSubmit} className="space-y-5">
+                <p className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">Este relato será público. Não inclua telefone, documentos ou outros dados pessoais na descrição.</p>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">
                     Categoria <span className="text-destructive">*</span>
@@ -196,14 +201,9 @@ export default function Denuncias() {
                     {formAnonymous ? "Denúncia anônima" : "Identificação visível"}
                   </span>
                 </div>
-
-                {/* Upload area */}
-                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-[oklch(0.72_0.12_40)]/50 transition-colors cursor-pointer">
-                  <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">
-                    Clique para adicionar foto ou vídeo
-                  </p>
-                </div>
+                {!formAnonymous && <label className="block text-sm font-medium text-foreground">Nome para exibição pública
+                  <input value={formName} onChange={(event) => setFormName(event.target.value)} required className="mt-1.5 w-full rounded-lg border border-border bg-background px-4 py-2.5" />
+                </label>}
 
                 <button
                   type="submit"
@@ -226,6 +226,26 @@ export default function Denuncias() {
                 </p>
               </div>
             </div>
+          </div>
+
+          <div className="mt-12">
+            <h2 className="font-serif text-2xl font-semibold text-foreground mb-5">Relatos da comunidade</h2>
+            {publicComplaints?.length ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {publicComplaints.map((item) => (
+                  <article key={item.id} className="rounded-xl border border-border bg-card p-5">
+                    <div className="flex justify-between gap-3 text-sm text-muted-foreground">
+                      <span className="font-semibold text-foreground">{categories.find((category) => category.value === item.type)?.label ?? item.type}</span>
+                      <span>{item.status === "resolved" ? "Resolvida" : item.status === "rejected" ? "Encerrada" : "Aberta"}</span>
+                    </div>
+                    <p className="mt-2 text-sm text-muted-foreground">{item.address || "Local não informado"}</p>
+                    {item.name !== "Anônimo" && <p className="mt-1 text-sm text-muted-foreground">Por {item.name}</p>}
+                    <p className="mt-3 whitespace-pre-wrap text-foreground">{item.description}</p>
+                    <p className="mt-3 text-xs text-muted-foreground">{item.createdAt.toLocaleDateString("pt-BR")}</p>
+                  </article>
+                ))}
+              </div>
+            ) : <p className="text-muted-foreground">Nenhum relato cadastrado ainda.</p>}
           </div>
         </div>
       </section>

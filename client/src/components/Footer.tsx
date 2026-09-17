@@ -57,7 +57,7 @@ export default function Footer() {
                 <span>contato@conectandocomunidade.org.br</span>
               </div>
               <p className="pt-2 text-xs opacity-50">
-                Desenvolvido com <Heart className="w-3 h-3 inline text-red-400" /> pela comunidade
+                Desenvolvido com <Heart className="w-3 h-3 inline text-red-400" /> por JHOW DEV
               </p>
             </div>
           </div>
@@ -65,7 +65,7 @@ export default function Footer() {
 
         <div className="mt-10 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs opacity-50">
           <p>&copy; {new Date().getFullYear()} Conectando a Comunidade — Bairro Campo Comprido</p>
-          <div className="flex gap-4">
+            <div className="flex gap-4">
             <Link href="/sobre" className="hover:opacity-70">Sobre o Projeto</Link>
             <Link href="/sugestoes" className="hover:opacity-70">Sugestões</Link>
           </div>

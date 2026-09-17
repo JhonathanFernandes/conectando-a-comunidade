@@ -70,7 +70,7 @@ interface SelectedBusiness {
 }
 
 export default function Mapa() {
-  const { data: approvedCommerces } = trpc.commerce.listApproved.useQuery();
+  const { data: approvedCommerces, refetch: refetchCommerces } = trpc.commerce.listApproved.useQuery();
   const mapBusinesses = useMemo(() => (approvedCommerces ?? []).flatMap((item) => {
     const lat = Number(item.lat);
     const lng = Number(item.lng);
@@ -159,19 +159,23 @@ export default function Mapa() {
     reader.readAsDataURL(file);
   };
 
-  const uploadPhotoFile = async () => {
-    if (!photoFile || photoUrl) return; // already uploaded
+  const uploadPhotoFile = async (): Promise<string | null> => {
+    if (!photoFile) return photoUrl;
     setUploading(true);
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = (reader.result as string).split(",")[1];
-      uploadPhotoMutation.mutate({
-        fileName: photoFile.name,
-        base64Data: base64,
-        mimeType: photoFile.type || "image/jpeg",
+    try {
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("Falha ao ler a imagem"));
+        reader.onload = () => resolve(String(reader.result).split(",")[1]);
+        reader.readAsDataURL(photoFile);
       });
-    };
-    reader.readAsDataURL(photoFile);
+      const uploaded = await uploadPhotoMutation.mutateAsync({ fileName: photoFile.name, base64Data, mimeType: photoFile.type || "image/jpeg" });
+      return uploaded.url;
+    } catch {
+      return null;
+    } finally {
+      setUploading(false);
+    }
   };
 
   // Initialize Google Places Autocomplete when form opens
@@ -321,7 +325,8 @@ export default function Mapa() {
   // tRPC mutations
   const addCommerceMutation = trpc.commerce.add.useMutation({
     onSuccess: () => {
-      toast.success("Comércio cadastrado com sucesso! Aguardando aprovação do administrador.");
+      toast.success("Comércio cadastrado e disponível para a comunidade.");
+      refetchCommerces();
       setFormData({ nome: "", segmento: "", rua: "", telefone: "", lat: 0, lng: 0 });
       setAddressSuggestion(null);
       setShowAddForm(false);
@@ -343,13 +348,8 @@ export default function Mapa() {
     }
 
     // Upload photo if available
-    if (photoFile && !photoUrl) {
-      await uploadPhotoFile();
-    }
-
-    // Small delay to let upload mutation complete
-    setTimeout(() => {
-      addCommerceMutation.mutate({
+    const uploadedPhotoUrl = photoFile && !photoUrl ? await uploadPhotoFile() : photoUrl;
+    addCommerceMutation.mutate({
         name: formData.nome,
         category: formData.segmento,
         address: formData.rua,
@@ -357,10 +357,9 @@ export default function Mapa() {
         lat: formData.lat ? String(formData.lat) : undefined,
         lng: formData.lng ? String(formData.lng) : undefined,
         coordsJson: formData.lat && formData.lng ? JSON.stringify({ lat: formData.lat, lng: formData.lng }) : undefined,
-        photoUrl: photoUrl || undefined,
-        photoKey: photoUrl || undefined,
+        photoUrl: uploadedPhotoUrl || undefined,
+        photoKey: uploadedPhotoUrl || undefined,
       });
-    }, 500);
   };
 
   const currentSegmentLabel = selectedSegment === "all"
@@ -645,7 +644,7 @@ export default function Mapa() {
                       </button>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Preencha os dados do seu estabelecimento no Campo Comprido. O cadastro será enviado para aprovação do administrador.
+                      Preencha os dados do seu estabelecimento no Campo Comprido. O cadastro aparecerá para a comunidade.
                     </p>
                   </div>
 

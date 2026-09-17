@@ -11,7 +11,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WaveDivider from "@/components/WaveDivider";
 import { MapView } from "@/components/Map";
-import { services as allServices } from "@/data/services-data";
+import { services as seedServices } from "@/data/services-data";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import StarRating from "@/components/StarRating";
@@ -211,18 +211,16 @@ const serviceCoords: Record<string, { lat: number; lng: number }> = {
   "Praça Prof. João Falarz": { lat: -25.4272, lng: -49.3155 },
 };
 
-// Mapear serviços para o mapa
-const mapServices = allServices.map((s) => {
-  const coords = serviceCoords[s.name] || {
-    lat: -25.4275 + (Math.random() - 0.5) * 0.008,
-    lng: -49.3170 + (Math.random() - 0.5) * 0.008,
-  };
-  return { ...s, lat: coords.lat, lng: coords.lng };
-});
-
 const CAMPO_COMPRIDO_CENTER = { lat: -25.4275, lng: -49.3170 };
 
 export default function Servicos() {
+  const { data: registeredServices, refetch: refetchRegisteredServices } = trpc.commerce.listApproved.useQuery();
+  const allServices: Service[] = useMemo(() => [...seedServices, ...(registeredServices ?? []).map((item) => ({ id: item.id + 1000000, name: item.name, category: item.category, address: item.address, phone: item.phone, hours: item.hours ?? "", rating: 0 }))], [registeredServices]);
+  const mapServices = useMemo(() => allServices.map((service) => {
+    const registered = registeredServices?.find((item) => item.id + 1000000 === service.id);
+    const coords = serviceCoords[service.name] || (registered ? { lat: Number(registered.lat), lng: Number(registered.lng) } : CAMPO_COMPRIDO_CENTER);
+    return { ...service, lat: Number.isFinite(coords.lat) ? coords.lat : CAMPO_COMPRIDO_CENTER.lat, lng: Number.isFinite(coords.lng) ? coords.lng : CAMPO_COMPRIDO_CENTER.lng };
+  }), [allServices, registeredServices]);
   const [activeCategory, setActiveCategory] = useState("Todos");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
@@ -261,7 +259,7 @@ export default function Servicos() {
   const [reviewComment, setReviewComment] = useState("");
 
   // Fetch all service reviews to build average rating map
-  const { data: allServiceReviews } = trpc.review.listAll.useQuery({ targetType: "service" });
+  const { data: allServiceReviews, refetch: refetchAllServiceReviews } = trpc.review.listAll.useQuery({ targetType: "service" });
   const { data: serviceReviewsData, refetch: refetchServiceReviews } = trpc.review.listByTarget.useQuery(
     { targetType: "service", targetId: reviewTarget?.id ?? 0 },
     { enabled: reviewTarget !== null }
@@ -291,6 +289,7 @@ export default function Servicos() {
       setReviewRating(0);
       setReviewComment("");
       refetchServiceReviews();
+      refetchAllServiceReviews();
     },
     onError: () => toast.error("Erro ao enviar avaliação"),
   });
@@ -310,7 +309,8 @@ export default function Servicos() {
 
   const addServiceMutation = trpc.commerce.add.useMutation({
     onSuccess: () => {
-      toast.success("Serviço cadastrado com sucesso! Aguardando aprovação do administrador.");
+      toast.success("Serviço cadastrado e disponível para a comunidade.");
+      refetchRegisteredServices();
       setFormData({ nome: "", categoria: "", endereco: "", telefone: "", horario: "", lat: 0, lng: 0 });
       setAddressSuggestion(null);
       setShowAddForm(false);
@@ -410,7 +410,7 @@ export default function Servicos() {
 
       markersRef.current.push(marker);
     });
-  }, [activeCategory, searchTerm]);
+  }, [activeCategory, searchTerm, mapServices]);
 
   const handleMapReady = (map: google.maps.Map) => {
     mapRef.current = map;
@@ -426,10 +426,7 @@ export default function Servicos() {
   }, [mapReady, activeCategory, searchTerm, updateMarkers]);
 
   const flyToService = (service: Service) => {
-    const coords = serviceCoords[service.name] || {
-      lat: -25.4275 + (Math.random() - 0.5) * 0.008,
-      lng: -49.3170 + (Math.random() - 0.5) * 0.008,
-    };
+    const coords = mapServices.find((item) => item.id === service.id) || CAMPO_COMPRIDO_CENTER;
     setSelectedService({ ...service, ...coords });
     if (mapRef.current) {
       mapRef.current.panTo(coords);
@@ -491,19 +488,23 @@ export default function Servicos() {
     reader.readAsDataURL(file);
   };
 
-  const uploadPhotoFile = async () => {
-    if (!photoFile || photoUrl) return;
+  const uploadPhotoFile = async (): Promise<string | null> => {
+    if (!photoFile) return photoUrl;
     setUploading(true);
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = (reader.result as string).split(",")[1];
-      uploadPhotoMutation.mutate({
-        fileName: photoFile.name,
-        base64Data: base64,
-        mimeType: photoFile.type || "image/jpeg",
+    try {
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("Falha ao ler a imagem"));
+        reader.onload = () => resolve(String(reader.result).split(",")[1]);
+        reader.readAsDataURL(photoFile);
       });
-    };
-    reader.readAsDataURL(photoFile);
+      const uploaded = await uploadPhotoMutation.mutateAsync({ fileName: photoFile.name, base64Data, mimeType: photoFile.type || "image/jpeg" });
+      return uploaded.url;
+    } catch {
+      return null;
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleAddService = async (e: React.FormEvent) => {
@@ -512,11 +513,8 @@ export default function Servicos() {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
-    if (photoFile && !photoUrl) {
-      await uploadPhotoFile();
-    }
-    setTimeout(() => {
-      addServiceMutation.mutate({
+    const uploadedPhotoUrl = photoFile && !photoUrl ? await uploadPhotoFile() : photoUrl;
+    addServiceMutation.mutate({
         name: formData.nome,
         category: formData.categoria,
         address: formData.endereco,
@@ -524,10 +522,9 @@ export default function Servicos() {
         lat: formData.lat ? String(formData.lat) : undefined,
         lng: formData.lng ? String(formData.lng) : undefined,
         coordsJson: formData.lat && formData.lng ? JSON.stringify({ lat: formData.lat, lng: formData.lng }) : undefined,
-        photoUrl: photoUrl || undefined,
-        photoKey: photoUrl || undefined,
+        photoUrl: uploadedPhotoUrl || undefined,
+        photoKey: uploadedPhotoUrl || undefined,
       });
-    }, 500);
   };
 
   // Category counts
@@ -871,7 +868,7 @@ export default function Servicos() {
               <div className="p-5 border-b border-border">
                 <h3 className="font-serif text-xl font-bold text-foreground">Cadastrar Serviço</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Adicione um serviço ou estabelecimento do Campo Comprido. Aguardará aprovação do administrador.
+                  Adicione um serviço ou estabelecimento do Campo Comprido. O cadastro aparecerá para a comunidade.
                 </p>
               </div>
 

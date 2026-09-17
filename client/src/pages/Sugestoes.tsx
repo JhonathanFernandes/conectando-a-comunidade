@@ -29,6 +29,7 @@ const complaintCategories = [
 ];
 
 export default function Sugestoes() {
+  const { data: publicSuggestions, refetch } = trpc.suggestion.listPublic.useQuery();
   const [activeTab, setActiveTab] = useState<"sugestoes" | "reclamacoes">("sugestoes");
   const [text, setText] = useState("");
 
@@ -43,6 +44,7 @@ export default function Sugestoes() {
       );
       setText("");
       setSelectedCategory("");
+      refetch();
     },
     onError: () => {
       toast.error("Erro ao enviar. Tente novamente.");
@@ -121,6 +123,7 @@ export default function Sugestoes() {
 
           <div className="max-w-2xl">
             <form onSubmit={handleSubmit} className="space-y-5">
+              <p className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">Sua mensagem será pública. Evite incluir dados pessoais.</p>
               {activeTab === "reclamacoes" && (
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">
@@ -188,6 +191,23 @@ export default function Sugestoes() {
                 Enviar
               </button>
             </form>
+          </div>
+          <div className="mt-12">
+            <h2 className="font-serif text-2xl font-semibold text-foreground mb-5">Ideias e reclamações da comunidade</h2>
+            {publicSuggestions?.length ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {publicSuggestions.map((item) => (
+                  <article key={item.id} className="rounded-xl border border-border bg-card p-5">
+                    <div className="flex justify-between gap-3 text-sm">
+                      <strong className="text-foreground">{item.type}</strong>
+                      <span className="text-muted-foreground">{item.status === "resolved" ? "Resolvida" : item.status === "rejected" ? "Encerrada" : "Aberta"}</span>
+                    </div>
+                    <p className="mt-3 whitespace-pre-wrap text-foreground">{item.message}</p>
+                    <p className="mt-3 text-xs text-muted-foreground">{item.createdAt.toLocaleDateString("pt-BR")}</p>
+                  </article>
+                ))}
+              </div>
+            ) : <p className="text-muted-foreground">Nenhuma contribuição cadastrada ainda.</p>}
           </div>
         </div>
       </section>

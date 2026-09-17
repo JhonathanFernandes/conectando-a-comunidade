@@ -123,10 +123,12 @@ export async function getReviewsByTarget(targetType: "commerce" | "service", tar
   return result;
 }
 
-export async function getAllReviews(targetType: "commerce" | "service") {
+export async function getAllReviews(targetType?: "commerce" | "service") {
   const db = await getDb();
   if (!db) return [];
-  const result = await db.select().from(reviews).where(eq(reviews.targetType, targetType)).orderBy(desc(reviews.createdAt));
+  const result = targetType
+    ? await db.select().from(reviews).where(eq(reviews.targetType, targetType)).orderBy(desc(reviews.createdAt))
+    : await db.select().from(reviews).orderBy(desc(reviews.createdAt));
   return result;
 }
 
@@ -141,7 +143,7 @@ export async function deleteReview(id: number) {
 export async function addMuralPost(data: { authorName: string; category: string; message: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return await db.insert(muralPosts).values({ ...data });
+  return await db.insert(muralPosts).values({ ...data, status: "approved" });
 }
 
 export async function getApprovedMuralPosts() {

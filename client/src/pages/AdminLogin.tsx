@@ -7,7 +7,7 @@ import { trpc } from "@/lib/trpc";
 
 function AuthenticatedAdminLogin() {
   const [, navigate] = useLocation();
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const utils = trpc.useUtils();
   const authConfigured = Boolean(import.meta.env.VITE_APP_ID && import.meta.env.VITE_OAUTH_PORTAL_URL);
   const [username, setUsername] = useState("");
@@ -37,16 +37,8 @@ function AuthenticatedAdminLogin() {
         </div>
         <h1 className="font-serif text-3xl font-bold text-foreground">Login de Administrador</h1>
         <p className="mt-2 text-muted-foreground">Conectando a Comunidade — Campo Comprido</p>
-        {loading ? (
-          <p className="mt-8 text-sm text-muted-foreground">Verificando acesso...</p>
-        ) : user && user.role !== "admin" ? (
-          <p className="mt-8 text-sm text-destructive">Esta conta não tem permissão de administração.</p>
-        ) : authConfigured ? (
-          <button onClick={startLogin} className="mt-8 rounded-lg bg-primary px-6 py-3 font-medium text-primary-foreground hover:opacity-90">
-            Entrar com conta autorizada
-          </button>
-        ) : (
-          <form onSubmit={(event) => { event.preventDefault(); setError(""); passwordLogin.mutate({ username, password }); }} className="mt-6 space-y-4 text-left">
+        <form onSubmit={(event) => { event.preventDefault(); setError(""); passwordLogin.mutate({ username, password }); }} className="mt-6 space-y-4 text-left">
+            {user && user.role !== "admin" && <p className="text-sm text-destructive">A conta atual não é administradora. Entre com as credenciais de administração.</p>}
             <label className="block text-sm font-medium text-foreground">Usuário
               <input autoComplete="username" required value={username} onChange={(event) => setUsername(event.target.value)} className="mt-1.5 w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
             </label>
@@ -57,8 +49,8 @@ function AuthenticatedAdminLogin() {
             <button type="submit" disabled={passwordLogin.isPending} className="w-full rounded-lg bg-primary px-6 py-3 font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50">
               {passwordLogin.isPending ? "Verificando..." : "Entrar no painel"}
             </button>
-          </form>
-        )}
+            {authConfigured && <button type="button" onClick={startLogin} className="w-full rounded-lg border border-border px-6 py-3 font-medium text-foreground hover:bg-muted">Entrar com conta autorizada</button>}
+        </form>
         <button onClick={() => navigate("/")} className="mt-5 block w-full text-sm text-primary hover:underline">Voltar ao início</button>
       </div>
     </div>
