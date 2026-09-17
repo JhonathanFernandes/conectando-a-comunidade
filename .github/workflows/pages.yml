@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   build:
+    if: ${{ vars.PUBLIC_APP_URL != '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
