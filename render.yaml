@@ -3,7 +3,7 @@ services:
     name: conectando-a-comunidade
     runtime: node
     plan: free
-    buildCommand: corepack enable && pnpm install --frozen-lockfile --prod=false && pnpm build
+    buildCommand: pnpm install --frozen-lockfile --prod=false && pnpm build
     startCommand: pnpm exec drizzle-kit migrate && pnpm start
     envVars:
       - key: DATABASE_URL
