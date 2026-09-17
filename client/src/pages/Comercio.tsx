@@ -1,9 +1,10 @@
+import { photoUrl } from "@/data/photos";
 /*
  * Design: Terra Viva — Comércio Local do Campo Comprido
  * Filtros agrupados em dropdown, terracota como cor de ação
  */
 import { useState, useRef, useEffect, useMemo } from "react";
-import { Star, MapPin, Phone, Clock, Instagram, Heart, Search, Globe, Filter, ChevronDown, ChevronRight, MessageSquare, Navigation, X } from "lucide-react";
+import { Star, MapPin, Phone, Clock, Instagram, Heart, Search, Globe, Filter, ChevronDown, ChevronRight, MessageSquare, Navigation } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { trpc } from "@/lib/trpc";
 import StarRating from "@/components/StarRating";
@@ -12,29 +13,21 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WaveDivider from "@/components/WaveDivider";
 import { Link } from "wouter";
-import { MapView } from "@/components/Map";
+import { featuredCommerces } from "@/data/featuredCommerces";
 
 // Categorias agrupadas
 const categoryGroups = [
   {
     title: "Alimentação",
-    items: ["Alimentação"],
+    items: ["Mercados", "Açougues", "Panificadoras", "Lanchonetes", "Restaurantes", "Hortifrutis"],
   },
   {
-    title: "Beleza e Saúde",
-    items: ["Beleza", "Saúde"],
+    title: "Saúde",
+    items: ["Farmácias", "Postos de saúde"],
   },
   {
-    title: "Tecnologia e Escritório",
-    items: ["Informática", "Papelaria"],
-  },
-  {
-    title: "Moda",
-    items: ["Vestuário"],
-  },
-  {
-    title: "Serviços",
-    items: ["Automotivo", "Construção", "Prestadores de serviço"],
+    title: "Outros serviços",
+    items: ["Pet Shops", "Bicicletarias", "Distribuidoras de bebidas"],
   },
 ];
 
@@ -52,33 +45,10 @@ interface CommerceItem {
   lat?: string;
   lng?: string;
   coordsJson?: string | null;
+  source?: string;
 }
 
-type SelectedCommerce = Omit<CommerceItem, "lat" | "lng"> & {
-  lat: number;
-  lng: number;
-};
-
-// Categorias com contagens dinâmicas são calculadas a partir dos dados do banco
-const CAMPO_COMPRIDO_CENTER = { lat: -25.4275, lng: -49.3170 };
-
-const fallbackCommerces: CommerceItem[] = [
-  { id: -1, name: "Mercado Guassu Campo Comprido", category: "Alimentação", address: "Rua Eduardo Sprada, 720 - Campo Comprido", phone: "(41) 99843-1030", instagram: "@mercadoguassu", hours: "07h-21h", description: "Mercado de bairro com alimentos, mercearia e delivery.", lat: "-25.4255", lng: "-49.3165" },
-  { id: -2, name: "Panificadora Panivida", category: "Alimentação", address: "Rua Luiz Tramontin, 2473 - Campo Comprido", phone: "(41) 3076-5500", instagram: "@panivida", hours: "06h-21h", description: "Padaria e confeitaria para café da manhã e lanches.", lat: "-25.4240", lng: "-49.3153" },
-  { id: -3, name: "Café Campo Comprido", category: "Alimentação", address: "Rua Prof. João Falarz, 1720-A - Campo Comprido", phone: "(41) 99863-1106", instagram: "@cafecampocomprido", hours: "12h-20h", description: "Cafeteria local para encontros rápidos e cafés especiais.", lat: "-25.4240", lng: "-49.3240" },
-  { id: -4, name: "Exclusive Studio", category: "Beleza", address: "Rua Waldir Pontes, 91 - Campo Comprido", phone: "(41) 99883-0497", instagram: "@exclusivestudio", hours: "09h-19h", description: "Salão de beleza com atendimento por agendamento.", lat: "-25.4240", lng: "-49.3118" },
-  { id: -5, name: "DG Beauty Hair", category: "Beleza", address: "Rua Eduardo Sprada, 2100 - Campo Comprido", phone: "(41) 99707-3300", instagram: "@dgbeautyhair", hours: "09h-19h", description: "Cortes, coloração e cuidados capilares.", lat: "-25.4240", lng: "-49.3140" },
-  { id: -6, name: "Farmácia Campofarma", category: "Saúde", address: "Rua Eduardo Sprada, 4600 - Campo Comprido", phone: "(41) 3373-1718", instagram: "@campofarma", hours: "08h-22h", description: "Farmácia local com medicamentos e itens de cuidado pessoal.", lat: "-25.4265", lng: "-49.3155" },
-  { id: -7, name: "BePet Pet Shop", category: "Saúde", address: "Rua Prof. João Falarz, 1757 - Campo Comprido", phone: "(41) 99611-0163", instagram: "@bepetpetshop", hours: "09h-18h30", description: "Pet shop com produtos, banho e tosa.", lat: "-25.4240", lng: "-49.3106" },
-  { id: -8, name: "Loja de Informática e Celulares CC", category: "Informática", address: "Av. João Gualberto, 1400 - Campo Comprido", phone: "(41) 3274-4500", instagram: "@informatica_cc", hours: "09h-19h", description: "Assistência, acessórios e venda de celulares.", lat: "-25.4240", lng: "-49.3234" },
-  { id: -9, name: "Papelaria e Bazar Campo Comprido", category: "Papelaria", address: "Rua Deputado Heitor Alencar Furtado, 3400 - Campo Comprido", phone: "(41) 3264-7900", instagram: "@papelariacampocomprido", hours: "08h-18h", description: "Materiais escolares, escritório e bazar.", lat: "-25.4288", lng: "-49.3185" },
-  { id: -10, name: "Loja de Roupas Moda Campo", category: "Vestuário", address: "Rua Professor João Falarz, 1400 - Campo Comprido", phone: "(41) 3285-5200", instagram: "@modacampo", hours: "09h-19h", description: "Moda casual e peças para o dia a dia.", lat: "-25.4275", lng: "-49.3155" },
-  { id: -11, name: "Auto Center Campo Comprido", category: "Automotivo", address: "Rua Renato Polatti, 3000 - Campo Comprido", phone: "(41) 3274-3300", instagram: "@autocentercampo", hours: "08h-18h", description: "Manutenção automotiva, pneus e serviços rápidos.", lat: "-25.4284", lng: "-49.3165" },
-  { id: -12, name: "Loja de Materiais de Construção Silva", category: "Construção", address: "Rua Renato Polatti, 3600 - Campo Comprido", phone: "(41) 3288-6400", instagram: "@construcaosilva", hours: "07h-18h", description: "Materiais de construção, ferramentas e ferragens.", lat: "-25.4262", lng: "-49.3148" },
-  { id: -13, name: "Studio Pilates Campo Comprido", category: "Prestadores de serviço", address: "Rua Professor João Falarz, 2600 - Campo Comprido", phone: "(41) 3285-8400", instagram: "@pilatescampocomprido", hours: "07h-22h", description: "Aulas de pilates e atendimento personalizado.", lat: "-25.4285", lng: "-49.3152" },
-];
-
-function getApproxCoords(item: CommerceItem) {
+function getCoords(item: CommerceItem) {
   const fromLat = Number.parseFloat(item.lat || "");
   const fromLng = Number.parseFloat(item.lng || "");
   if (Number.isFinite(fromLat) && Number.isFinite(fromLng) && fromLat !== 0 && fromLng !== 0) {
@@ -94,17 +64,11 @@ function getApproxCoords(item: CommerceItem) {
         return { lat, lng };
       }
     } catch {
-      // Fall back to a stable approximate point below.
+      // Endereços sem coordenadas são pesquisados pelo nome no mapa.
     }
   }
 
-  const seed = `${item.id}-${item.name}`.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const latOffset = ((seed % 17) - 8) * 0.00045;
-  const lngOffset = (((seed * 7) % 17) - 8) * 0.00045;
-  return {
-    lat: CAMPO_COMPRIDO_CENTER.lat + latOffset,
-    lng: CAMPO_COMPRIDO_CENTER.lng + lngOffset,
-  };
+  return null;
 }
 
 export default function Comercio() {
@@ -112,11 +76,7 @@ export default function Comercio() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
-  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
-  const [isMapReady, setIsMapReady] = useState(false);
-  const [selectedCommerce, setSelectedCommerce] = useState<SelectedCommerce | null>(null);
+  const [selectedCommerce, setSelectedCommerce] = useState<CommerceItem | null>(null);
 
   // Real data from database
   const { data: dbCommerces, isLoading: dbLoading } = trpc.commerce.listApproved.useQuery();
@@ -163,7 +123,12 @@ export default function Comercio() {
     lng: c.lng || undefined,
     coordsJson: c.coordsJson,
   }));
-  const commerceList = dbCommerceList.length > 0 ? dbCommerceList : fallbackCommerces;
+  const commerceList: CommerceItem[] = [
+    ...dbCommerceList,
+    ...featuredCommerces.filter((featured) =>
+      !dbCommerceList.some((registered) => registered.name.toLocaleLowerCase("pt-BR") === featured.name.toLocaleLowerCase("pt-BR"))
+    ),
+  ];
   const addReviewMutation = trpc.review.add.useMutation({
     onSuccess: () => {
       toast.success("Avaliação enviada com sucesso!");
@@ -195,6 +160,8 @@ export default function Comercio() {
 
   const handleCategoryClick = (cat: string) => {
     setActiveCategory(cat);
+    setExpandedGroups(cat === "Todos" ? {} : { [cat]: true });
+    setSelectedCommerce(null);
     setFilterOpen(false);
   };
 
@@ -202,7 +169,7 @@ export default function Comercio() {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
   const toggleGroup = (title: string) => {
-    setExpandedGroups((prev) => ({ ...prev, [title]: !prev[title] }));
+    setExpandedGroups((prev) => ({ ...prev, [title]: !(prev[title] ?? (activeCategory === title || Boolean(searchTerm.trim()))) }));
   };
 
   // Group filtered items by category
@@ -217,7 +184,7 @@ export default function Comercio() {
 
   // Order groups: predefined order, then alphabetically
   const orderedGroups = useMemo(() => {
-    const order = ["Alimentação", "Beleza", "Saúde", "Informática", "Papelaria", "Vestuário", "Automotivo", "Construção", "Prestadores de serviço"];
+    const order = ["Farmácias", "Mercados", "Açougues", "Pet Shops", "Bicicletarias", "Distribuidoras de bebidas", "Panificadoras", "Lanchonetes", "Restaurantes", "Hortifrutis", "Postos de saúde"];
     return Object.keys(groupedItems).sort((a, b) => {
       const ai = order.indexOf(a);
       const bi = order.indexOf(b);
@@ -225,85 +192,32 @@ export default function Comercio() {
     });
   }, [groupedItems]);
 
-  const commercesWithCoords = useMemo(() => {
-    return filtered.map((item) => ({
-      item,
-      ...getApproxCoords(item),
-    }));
-  }, [filtered]);
-
   const flyToCommerce = (item: CommerceItem) => {
-    const coords = getApproxCoords(item);
-    setSelectedCommerce({ ...item, ...coords });
-    if (mapRef.current) {
-      mapRef.current.panTo(coords);
-      mapRef.current.setZoom(16);
-    }
+    setSelectedCommerce(item);
     const mapElement = document.getElementById("comercio-map");
-    mapElement?.scrollIntoView({ behavior: "smooth", block: "center" });
+    mapElement?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  useEffect(() => {
-    if (!isMapReady || !mapRef.current || !window.google?.maps) return;
-
-    markersRef.current.forEach((marker) => {
-      marker.map = null;
-    });
-    markersRef.current = [];
-
-    const map = mapRef.current;
-    const infoWindow = infoWindowRef.current ?? new google.maps.InfoWindow();
-    infoWindowRef.current = infoWindow;
-    const bounds = new google.maps.LatLngBounds();
-
-    commercesWithCoords.forEach(({ item, lat, lng }) => {
-      const marker = new google.maps.marker.AdvancedMarkerElement({
-        map,
-        position: { lat, lng },
-        title: item.name,
-      });
-
-      marker.addListener("click", () => {
-        setSelectedCommerce({ ...item, lat, lng });
-        const content = document.createElement("div");
-        content.style.maxWidth = "260px";
-        content.style.padding = "8px";
-        content.innerHTML = `
-          <p style="font-weight:bold;margin:0;font-size:14px;"></p>
-          <p style="margin:2px 0 0;font-size:12px;color:#666;"></p>
-          <p style="margin:2px 0;font-size:12px;"></p>
-          <p style="margin:0;font-size:12px;"></p>
-        `;
-        const [name, category, address, phone] = Array.from(content.querySelectorAll("p"));
-        name.textContent = item.name;
-        category.textContent = item.category;
-        address.textContent = item.address;
-        phone.textContent = `Telefone: ${item.phone}`;
-        infoWindow.setContent(content);
-        infoWindow.open({ anchor: marker, map });
-      });
-
-      markersRef.current.push(marker);
-      bounds.extend({ lat, lng });
-    });
-
-    if (!bounds.isEmpty()) {
-      map.fitBounds(bounds);
-      if ((map.getZoom() ?? 15) > 16) map.setZoom(16);
-    }
-  }, [isMapReady, commercesWithCoords]);
+  const mapCommerce = selectedCommerce && filtered.some((item) => item.id === selectedCommerce.id)
+    ? selectedCommerce
+    : activeCategory !== "Todos" || searchTerm.trim() ? filtered[0] : null;
+  const mapCoords = mapCommerce ? getCoords(mapCommerce) : null;
+  const mapQuery = mapCommerce
+    ? mapCoords ? `${mapCoords.lat},${mapCoords.lng}` : `${mapCommerce.name}, ${mapCommerce.address}`
+    : "Campo Comprido, Curitiba, PR";
+  const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`;
 
   return (
     <div className="min-h-screen">
       <Header />
 
       {/* Hero */}
-      <section className="pt-28 lg:pt-36 pb-12 relative overflow-hidden">
+      <section className="pt-28 lg:pt-36 pb-12 min-h-[320px] lg:min-h-[360px] relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="/manus-storage/comercio-novo_f65f371d.jpg"
-            alt="Comércio do Campo Comprido"
-            className="w-full h-full object-cover" loading="eager"
+            src={photoUrl("rua-antonio-macioski.jpg")}
+            alt="Rua Antônio Macioski no Campo Comprido"
+            className="w-full h-full object-cover object-center" loading="eager"
           />
           <div className="absolute inset-0 bg-black/50" />
         </div>
@@ -360,7 +274,7 @@ export default function Comercio() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -8, scale: 0.96 }}
                     transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-                    className="absolute top-full left-0 mt-2 w-72 max-w-[calc(100vw-2rem)] bg-card dark:bg-[oklch(0.22_0.02_160)] rounded-xl shadow-2xl border border-border z-50 overflow-hidden"
+                    className="absolute top-full left-0 mt-2 max-h-[70vh] w-72 max-w-[calc(100vw-2rem)] overflow-y-auto bg-card dark:bg-[oklch(0.22_0.02_160)] rounded-xl shadow-2xl border border-border z-50"
                   >
                     {/* All */}
                     <button
@@ -409,69 +323,28 @@ export default function Comercio() {
           <p className="text-sm text-muted-foreground mb-4">
             {filtered.length} {filtered.length === 1 ? "estabelecimento" : "estabelecimentos"} encontrado{filtered.length !== 1 ? "s" : ""}
           </p>
+          <p className="text-sm text-muted-foreground mb-5">
+            Referências do Campo Comprido e de bairros próximos aparecem junto dos cadastros aprovados pela comunidade. Confira os dados atuais no link de cada local.
+          </p>
 
-          {/* Interactive Map */}
-          <div id="comercio-map" className="relative rounded-xl overflow-hidden border border-border shadow-lg mb-8" style={{ height: "400px", minHeight: "350px" }}>
-            <MapView
-              className="w-full h-full"
-              initialCenter={CAMPO_COMPRIDO_CENTER}
-              initialZoom={15}
-              fallbackMarkers={commercesWithCoords.map(({ item, lat, lng }) => ({
-                id: item.id,
-                title: item.name,
-                subtitle: item.category,
-                lat,
-                lng,
-                onClick: () => setSelectedCommerce({ ...item, lat, lng }),
-              }))}
-              onMapReady={(map) => {
-                mapRef.current = map;
-                setIsMapReady(true);
-              }}
-            />
-            <div className="absolute top-4 left-4 bg-card/90 dark:bg-[oklch(0.22_0.02_160)]/90 px-3 py-1.5 rounded-full text-xs font-medium text-muted-foreground dark:text-[oklch(0.70_0.02_80)] shadow-sm">
-              {commercesWithCoords.length} {commercesWithCoords.length === 1 ? "comércio" : "comércios"} no mapa
-            </div>
-
-            {selectedCommerce && (
-              <div className="absolute bottom-4 left-4 right-4 lg:left-auto lg:right-4 lg:w-80 bg-card dark:bg-[oklch(0.22_0.02_160)] rounded-xl shadow-2xl border border-border z-10">
-                <div className="p-4 border-b border-border">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-serif text-lg font-bold text-foreground">{selectedCommerce.name}</h3>
-                      <p className="text-sm text-[oklch(0.72_0.12_40)] font-medium mt-0.5">{selectedCommerce.category}</p>
-                    </div>
-                    <button onClick={() => setSelectedCommerce(null)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
-                      <X className="w-4 h-4 text-muted-foreground" />
-                    </button>
-                  </div>
-                </div>
-                <div className="p-4 space-y-2">
-                  <div className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-[oklch(0.72_0.12_40)] shrink-0 mt-0.5" />
-                    <p className="text-sm text-foreground">{selectedCommerce.address}</p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Phone className="w-4 h-4 text-[oklch(0.72_0.12_40)] shrink-0 mt-0.5" />
-                    <p className="text-sm text-foreground">{selectedCommerce.phone}</p>
-                  </div>
-                </div>
-                <div className="p-4 pt-0 flex gap-2">
-                  <button
-                    onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${selectedCommerce.lat},${selectedCommerce.lng}`, "_blank")}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[oklch(0.72_0.12_40)] text-white px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-[oklch(0.65_0.12_40)] transition-colors"
-                  >
-                    <Navigation className="w-4 h-4" /> Rotas
-                  </button>
-                  <button
-                    onClick={() => { if (selectedCommerce.phone) window.open(`tel:${selectedCommerce.phone}`, "_self"); }}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 bg-primary text-white px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
-                  >
-                    <Phone className="w-4 h-4" /> Ligar
-                  </button>
-                </div>
+          <div id="comercio-map" className="mb-8 scroll-mt-24">
+            <div className="flex flex-wrap items-end justify-between gap-2 mb-3">
+              <div>
+                <h2 className="font-serif text-xl font-bold text-foreground">Mapa do comércio</h2>
+                <p className="text-sm text-muted-foreground">Escolha um segmento ou clique em “Ver no mapa” em um estabelecimento.</p>
               </div>
-            )}
+              {mapCommerce && <span className="text-sm font-medium text-primary">{mapCommerce.name}</span>}
+            </div>
+            <div className="rounded-xl overflow-hidden border border-border shadow-lg bg-muted h-[350px] md:h-[400px]">
+              <iframe
+                key={mapUrl}
+                title={mapCommerce ? `Mapa de ${mapCommerce.name}` : "Mapa do Campo Comprido"}
+                src={mapUrl}
+                className="w-full h-full border-0"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
           </div>
 
           {/* Accordion: category groups (collapsed by default) */}
@@ -510,14 +383,14 @@ export default function Comercio() {
                   </div>
                   <ChevronRight
                     className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${
-                      expandedGroups[cat] ? "rotate-90" : ""
+                      expandedGroups[cat] ?? (activeCategory === cat || Boolean(searchTerm.trim())) ? "rotate-90" : ""
                     }`}
                   />
                 </button>
 
                 {/* Expandable content */}
                 <AnimatePresence>
-                  {expandedGroups[cat] && (
+                  {(expandedGroups[cat] ?? (activeCategory === cat || Boolean(searchTerm.trim()))) && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
@@ -540,6 +413,7 @@ export default function Comercio() {
                     <h3 className="font-serif text-lg font-semibold text-foreground group-hover:text-[oklch(0.72_0.12_40)] transition-colors">
                       {item.name}
                     </h3>
+                    {item.source && <span className="text-xs text-muted-foreground">Referência local</span>}
                   </div>
                   {ratingMap[item.id] && ratingMap[item.id].count > 0 && (
                     <button
@@ -563,22 +437,23 @@ export default function Comercio() {
                     <MapPin className="w-4 h-4 shrink-0 text-primary" />
                     <span className="text-muted-foreground dark:text-[oklch(0.70_0.02_80)]">{item.address}</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  {item.phone && <div className="flex items-center gap-2">
                     <Phone className="w-4 h-4 shrink-0 text-primary" />
                     <span className="text-muted-foreground dark:text-[oklch(0.70_0.02_80)]">{item.phone}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
+                  </div>}
+                  {item.hours && <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 shrink-0 text-primary" />
                     <span className="text-muted-foreground dark:text-[oklch(0.70_0.02_80)]">{item.hours}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
+                  </div>}
+                  {item.instagram && <div className="flex items-center gap-2">
                     <Instagram className="w-4 h-4 shrink-0 text-primary" />
                     <span className="text-[oklch(0.72_0.12_40)] dark:text-[oklch(0.78_0.10_40)]">{item.instagram}</span>
-                  </div>
+                  </div>}
                 </div>
+                {item.source && <a href={item.source} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block text-xs text-primary underline">Ver fonte e dados atuais</a>}
 
                 {/* Average rating display — clickable */}
-                {!ratingMap[item.id] || ratingMap[item.id].count === 0 ? (
+                {item.id < 0 ? null : !ratingMap[item.id] || ratingMap[item.id].count === 0 ? (
                   <button
                     onClick={() => setReviewTarget({ type: "commerce", id: item.id, name: item.name })}
                     className="w-full mt-3 p-2 rounded-lg bg-muted/50 text-muted-foreground text-xs font-medium hover:bg-muted transition-colors"
@@ -604,25 +479,26 @@ export default function Comercio() {
                   </button>
                   <button
                     onClick={() => {
-                      const coords = getApproxCoords(item);
-                      window.open(`https://www.google.com/maps/dir/?api=1&destination=${coords.lat},${coords.lng}`, "_blank");
+                      const coords = getCoords(item);
+                      const destination = coords ? `${coords.lat},${coords.lng}` : item.address;
+                      window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`, "_blank", "noopener,noreferrer");
                     }}
                     className="text-xs px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted transition-colors flex items-center gap-1"
                   >
                     <Navigation className="w-3 h-3" /> Rota
                   </button>
-                  <button
+                  {item.phone && <button
                     onClick={() => { if (item.phone) window.open(`tel:${item.phone}`, "_self"); }}
                     className="text-xs px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted transition-colors flex items-center gap-1"
                   >
                     <Phone className="w-3 h-3" /> Ligar
-                  </button>
-                  <button
+                  </button>}
+                  {item.id > 0 && <button
                     onClick={() => setReviewTarget({ type: "commerce", id: item.id, name: item.name })}
                     className="text-xs px-3 py-1.5 rounded-lg bg-[oklch(0.72_0.12_40)]/10 text-[oklch(0.72_0.12_40)] hover:bg-[oklch(0.72_0.12_40)] hover:text-white transition-colors flex items-center gap-1"
                   >
                     <MessageSquare className="w-3 h-3" /> Avaliar
-                  </button>
+                  </button>}
                   <button className="text-xs px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted transition-colors flex items-center gap-1">
                     <Heart className="w-3 h-3" /> Salvar
                   </button>

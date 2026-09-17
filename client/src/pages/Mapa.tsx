@@ -3,7 +3,7 @@
  * Google Maps focado na região do Campo Comprido, filtros agrupados em dropdown,
  * geolocalização em tempo real, sistema de favoritos, adicionar comércio
  */
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { MapView } from "@/components/Map";
 import { Search, Navigation, MapPin, X, Phone, Star, Plus, ChevronDown, Heart, Filter, Loader2, MapPinned, Upload, Image as ImageIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,9 +11,10 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { photoUrl as localPhotoUrl } from "@/data/photos";
 
 // Campo Comprido center coordinates (Terminal Campo Comprido area)
-const CAMPO_COMPRIDO_CENTER = { lat: -25.4275, lng: -49.3170 };
+const CAMPO_COMPRIDO_CENTER = { lat: -25.44, lng: -49.34 };
 
 // Business segments grouped by category
 const segmentGroups = [
@@ -58,32 +59,6 @@ const segmentGroups = [
 // Flatten all segments
 const allSegments = segmentGroups.flatMap((g) => g.items);
 
-// Business data — Campo Comprido region (Rua João Gava, São José, Barão do Rio Branco, etc.)
-const mapBusinesses = [
-  { id: 1, name: "Padaria Pão Quente", category: "cafe", lat: -25.4270, lng: -49.3160, address: "Av. João Gualberto, 900 — Campo Comprido", phone: "(41) 3264-4321", rating: 4.8 },
-  { id: 2, name: "Restaurante Sabor do Paraná", category: "restaurant", lat: -25.4290, lng: -49.3180, address: "Av. Prefeito Omar Sabbag, 1800 — Campo Comprido", phone: "(41) 3264-7777", rating: 4.6 },
-  { id: 3, name: "Supermercado Campo Comprido", category: "supermarket", lat: -25.4260, lng: -49.3150, address: "Av. Manoel Ribas, 800 — Campo Comprido", phone: "(41) 3264-9876", rating: 4.3 },
-  { id: 4, name: "Farmácia Popular CC", category: "pharmacy", lat: -25.4250, lng: -49.3190, address: "Av. João Gualberto, 1200 — Campo Comprido", phone: "(41) 3264-6666", rating: 4.5 },
-  { id: 5, name: "Clínica Saúde Plus", category: "health", lat: -25.4300, lng: -49.3140, address: "Av. Prefeito Omar Sabbag, 1600 — Campo Comprido", phone: "(41) 3264-3333", rating: 4.5 },
-  { id: 6, name: "Escola Municipal Campo Comprido", category: "education", lat: -25.4285, lng: -49.3185, address: "Rua Deputado Heitor Alencar Furtado, 2500 — Campo Comprido", phone: "(41) 3264-5678", rating: 4.7 },
-  { id: 7, name: "Academia Fitness CC", category: "gym", lat: -25.4240, lng: -49.3170, address: "Av. Prefeito Omar Sabbag, 2000 — Campo Comprido", phone: "(41) 3264-1234", rating: 4.4 },
-  { id: 8, name: "Posto Shell Campo Comprido", category: "gas_station", lat: -25.4310, lng: -49.3155, address: "Av. Manoel Ribas, 1200 — Campo Comprido", phone: "(41) 3264-3456", rating: 4.2 },
-  { id: 9, name: "Banco do Brasil CC", category: "bank", lat: -25.4275, lng: -49.3165, address: "Av. João Gualberto, 1100 — Campo Comprido", phone: "(41) 3264-4444", rating: 3.9 },
-  { id: 10, name: "Parque Barigui — Entrada Campo Comprido", category: "park", lat: -25.4220, lng: -49.3200, address: "Av. Manoel Ribas, s/n — Campo Comprido", phone: "", rating: 4.9 },
-  { id: 11, name: "Igreja Nossa Senhora Aparecida", category: "church", lat: -25.4295, lng: -49.3175, address: "Rua Deputado Heitor Alencar Furtado, 3000 — Campo Comprido", phone: "", rating: 4.8 },
-  { id: 12, name: "Salão Beleza Natural", category: "beauty", lat: -25.4265, lng: -49.3155, address: "Av. João Gualberto, 1300 — Campo Comprido", phone: "(41) 3264-5555", rating: 4.7 },
-  { id: 13, name: "Auto Center Campo Comprido", category: "automotive", lat: -25.4320, lng: -49.3130, address: "Av. Manoel Ribas, 1000 — Campo Comprido", phone: "(41) 3264-9999", rating: 4.3 },
-  { id: 14, name: "ModaNorte", category: "store", lat: -25.4268, lng: -49.3190, address: "Av. Prefeito Omar Sabbag, 1400 — Campo Comprido", phone: "(41) 3264-2222", rating: 4.1 },
-  { id: 15, name: "Pet Shop Amigo", category: "pet", lat: -25.4305, lng: -49.3185, address: "Rua Deputado Heitor Alencar Furtado, 2200 — Campo Comprido", phone: "(41) 3264-7890", rating: 4.6 },
-  { id: 16, name: "UBS Campo Comprido", category: "ubs", lat: -25.4280, lng: -49.3200, address: "Av. Prefeito Omar Sabbag, 1500 — Campo Comprido", phone: "(41) 3264-0001", rating: 4.5 },
-  { id: 17, name: "CRAS Campo Comprido", category: "health", lat: -25.4288, lng: -49.3168, address: "Av. João Gualberto, 800 — Campo Comprido", phone: "(41) 3264-5000", rating: 4.2 },
-  { id: 18, name: "Tech Solutions CC", category: "store", lat: -25.4255, lng: -49.3182, address: "Av. João Gualberto, 1500 — Campo Comprido", phone: "(41) 3264-1111", rating: 4.4 },
-  { id: 19, name: "Café da Praça CC", category: "cafe", lat: -25.4268, lng: -49.3178, address: "Av. Prefeito Omar Sabbag, 1200 — Campo Comprido", phone: "(41) 3264-8888", rating: 4.5 },
-  { id: 20, name: "Churrascaria do Paraná CC", category: "restaurant", lat: -25.4315, lng: -49.3120, address: "Av. Manoel Ribas, 1500 — Campo Comprido", phone: "(41) 3264-1200", rating: 4.7 },
-  { id: 21, name: "Terminal Campo Comprido", category: "store", lat: -25.4278, lng: -49.3168, address: "Terminal Campo Comprido — Av. João Gualberto", phone: "", rating: 4.0 },
-  { id: 22, name: "Lanchonete do Terminal", category: "restaurant", lat: -25.4273, lng: -49.3163, address: "Terminal Campo Comprido", phone: "(41) 3264-7654", rating: 4.2 },
-];
-
 interface SelectedBusiness {
   name: string;
   category: string;
@@ -95,6 +70,22 @@ interface SelectedBusiness {
 }
 
 export default function Mapa() {
+  const { data: approvedCommerces } = trpc.commerce.listApproved.useQuery();
+  const mapBusinesses = useMemo(() => (approvedCommerces ?? []).flatMap((item) => {
+    const lat = Number(item.lat);
+    const lng = Number(item.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat === 0 || lng === 0) return [];
+    return [{
+      id: item.id,
+      name: item.name,
+      category: allSegments.some((segment) => segment.id === item.category) ? item.category : "store",
+      lat,
+      lng,
+      address: item.address,
+      phone: item.phone,
+      rating: 0,
+    }];
+  }), [approvedCommerces]);
   const [selectedSegment, setSelectedSegment] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedBusiness, setSelectedBusiness] = useState<SelectedBusiness | null>(null);
@@ -221,12 +212,12 @@ export default function Mapa() {
     });
   }, []);
 
-  const filteredBusinesses = mapBusinesses.filter((b) => {
+  const filteredBusinesses = useMemo(() => mapBusinesses.filter((b) => {
     const matchSegment = selectedSegment === "all" || b.category === selectedSegment;
     const matchSearch = !searchTerm || b.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchFavorite = !showFavoritesOnly || favorites.includes(String(b.id));
     return matchSegment && matchSearch && matchFavorite;
-  });
+  }), [mapBusinesses, selectedSegment, searchTerm, showFavoritesOnly, favorites]);
 
   // Initialize markers on map
   const updateMarkers = useCallback(() => {
@@ -384,6 +375,7 @@ export default function Mapa() {
 
       {/* Hero */}
       <section className="pt-20 lg:pt-24 pb-4 bg-primary relative overflow-hidden">
+        <img src={localPhotoUrl("rua-pedro-zanlorenzi.jpg")} alt="Rua Pedro Artur Zanlorenzi no Campo Comprido" className="absolute inset-0 h-full w-full object-cover opacity-25" />
         <div className="container relative z-10">
           <p className="text-primary-foreground/70 font-medium text-sm uppercase tracking-[0.2em] mb-2">
             Mapa Interativo
@@ -618,11 +610,11 @@ export default function Mapa() {
                   )}
 
                   {/* Rating */}
-                  <div className="flex items-center gap-2">
+                  {selectedBusiness.rating > 0 && <div className="flex items-center gap-2">
                     <Star className="w-4 h-4 text-yellow-500 fill-current" />
                     <span className="text-sm font-medium text-foreground">{selectedBusiness.rating}</span>
                     <span className="text-xs text-muted-foreground">/ 5.0</span>
-                  </div>
+                  </div>}
                 </div>
 
                 {/* Popup actions */}

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 const statusMap: Record<string, string> = {
   "pending": "Pendente",
@@ -40,15 +41,17 @@ export default function AdminDashboard() {
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("comercios");
   const [searchTerm, setSearchTerm] = useState("");
-  const [loggedIn, setLoggedIn] = useState(false);
+  const { user, loading, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const isAdmin = user?.role === "admin";
 
   // tRPC queries
-  const { data: comerciosData, refetch: refetchComercios } = trpc.commerce.list.useQuery();
-  const { data: denunciasData, refetch: refetchDenuncias } = trpc.complaint.list.useQuery();
-  const { data: sugestoesData, refetch: refetchSugestoes } = trpc.suggestion.list.useQuery();
+  const { data: comerciosData, refetch: refetchComercios } = trpc.commerce.list.useQuery(undefined, { enabled: isAdmin });
+  const { data: denunciasData, refetch: refetchDenuncias } = trpc.complaint.list.useQuery(undefined, { enabled: isAdmin });
+  const { data: sugestoesData, refetch: refetchSugestoes } = trpc.suggestion.list.useQuery(undefined, { enabled: isAdmin });
   const { data: telefonesData } = trpc.phone.list.useQuery();
   const { data: eventosData } = trpc.event.list.useQuery();
-  const { data: muralData, refetch: refetchMural } = trpc.mural.listAll.useQuery();
+  const { data: muralData, refetch: refetchMural } = trpc.mural.listAll.useQuery(undefined, { enabled: isAdmin });
   const { data: reviewsData, refetch: refetchReviews } = trpc.review.listAll.useQuery({});
 
   // tRPC mutations
@@ -74,29 +77,22 @@ export default function AdminDashboard() {
   ];
 
   useEffect(() => {
-    const isAuth = sessionStorage.getItem("admin_logged_in");
-    if (!isAuth) {
-      navigate("/admin");
-    } else {
-      setLoggedIn(true);
-    }
-  }, [navigate]);
+    if (!loading && user?.role !== "admin") navigate("/admin");
+  }, [loading, user, navigate]);
 
   const handleLogout = () => {
-    sessionStorage.removeItem("admin_logged_in");
+    logout();
     toast.info("Sessão encerrada");
     navigate("/admin");
   };
 
-  if (!loggedIn) {
+  if (loading || user?.role !== "admin") {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
-
-  const { theme, toggleTheme } = useTheme();
 
   return (
     <div className="min-h-screen bg-background dark:bg-[oklch(0.18_0.02_160)]">

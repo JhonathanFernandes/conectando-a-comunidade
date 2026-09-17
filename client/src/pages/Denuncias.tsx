@@ -1,3 +1,4 @@
+import { photoUrl } from "@/data/photos";
 /*
  * Design: Terra Viva — Canal de Denúncias
  * Terracota como cor de ação principal, formulário orgânico
@@ -27,20 +28,6 @@ const categories = [
   { value: "outros", label: "Outros" },
 ];
 
-const statuses = [
-  { status: "recebido", label: "Recebido", bg: "bg-blue-50 border-blue-200 text-blue-700" },
-  { status: "em-analise", label: "Em análise", bg: "bg-yellow-50 border-yellow-200 text-yellow-700" },
-  { status: "encaminhado", label: "Encaminhado", bg: "bg-orange-50 border-orange-200 text-orange-700" },
-  { status: "resolvido", label: "Resolvido", bg: "bg-green-50 border-green-200 text-green-700" },
-];
-
-const sampleDenuncias = [
-  { id: 1, category: "buraco", description: "Buraco grande na Rua São José, próximo ao número 400", address: "Rua São José, 400", date: "15/07/2026", status: "em-analise", anonymous: true },
-  { id: 2, category: "iluminacao", description: "Poste apagado há 3 dias na Rua Conselheiro Laurindo", address: "Rua Conselheiro Laurindo, 200", date: "12/07/2026", status: "recebido", anonymous: false },
-  { id: 3, category: "lixo", description: "Acúmulo de lixo na esquina da Praça Getúlio Vargas", address: "Praça Getúlio Vargas", date: "10/07/2026", status: "resolvido", anonymous: true },
-  { id: 4, category: "dengue", description: "Água parada em terreno baldio na Rua João Gava", address: "Rua João Gava, 350", date: "08/07/2026", status: "encaminhado", anonymous: false },
-];
-
 export default function Denuncias() {
   const [showForm, setShowForm] = useState(false);
   const [formCategory, setFormCategory] = useState("");
@@ -51,7 +38,7 @@ export default function Denuncias() {
 
   const reportMutation = trpc.complaint.add.useMutation({
     onSuccess: () => {
-      toast.success("Denúncia registrada com sucesso! Acompanhe pelo código gerado.");
+      toast.success("Denúncia registrada com sucesso!");
       setShowForm(false);
       setFormCategory("");
       setFormDescription("");
@@ -82,13 +69,13 @@ export default function Denuncias() {
       <Header />
 
       {/* Hero */}
-      <section className="pt-28 lg:pt-36 pb-12 relative overflow-hidden">
+      <section className="pt-28 lg:pt-36 pb-12 min-h-[320px] lg:min-h-[360px] relative overflow-hidden">
         {/* Impactful background image */}
         <div className="absolute inset-0">
           <img
-            src="/manus-storage/denuncias-hero_5e28ba3a.jpg"
-            alt="Problemas de infraestrutura urbana"
-            className="w-full h-full object-cover"
+            src={photoUrl("rua-pedro-zanlorenzi.jpg")}
+            alt="Rua Pedro Artur Zanlorenzi no Campo Comprido"
+            className="w-full h-full object-cover object-center"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-transparent" />
         </div>
@@ -229,42 +216,16 @@ export default function Denuncias() {
             </div>
           )}
 
-          {/* Denúncias list */}
-          <h3 className="font-serif text-xl font-semibold text-foreground mb-6">
-            Denúncias Recentes
-          </h3>
-
-          <div className="space-y-4">
-            {sampleDenuncias.map((d) => {
-              const statusObj = statuses.find((s) => s.status === d.status);
-              return (
-                <div
-                  key={d.id}
-                  className="p-5 rounded-xl hover:shadow-md transition-shadow bg-card border border-border dark:bg-[oklch(0.22_0.01_150)]"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
-                        <AlertTriangle className="w-3 h-3" />
-                        {categories.find((c) => c.value === d.category)?.label || d.category}
-                      </span>
-                      <span className="text-sm text-muted-foreground">{d.date}</span>
-                    </div>
-                    {statusObj && (
-                      <span className={`text-xs px-2.5 py-1 rounded-full font-medium border ${statusObj.bg}`}>
-                        {statusObj.label}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-foreground mb-2">{d.description}</p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <MapPin className="w-3.5 h-3.5" />
-                    <span>{d.address}</span>
-                    {d.anonymous && <span className="text-muted-foreground/60">&mdash; Anônimo</span>}
-                  </div>
-                </div>
-              );
-            })}
+          <div className="max-w-2xl mx-auto rounded-xl border border-border bg-card p-6">
+            <div className="flex items-start gap-3">
+              <MapPin className="w-5 h-5 shrink-0 mt-0.5 text-primary" />
+              <div>
+                <h3 className="font-serif text-xl font-semibold text-foreground mb-2">Informe o local no Campo Comprido</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Escreva a rua e um ponto de referência próximo ao problema. Isso ajuda a identificar o local no bairro e encaminhar a denúncia com mais precisão.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>

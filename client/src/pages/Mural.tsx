@@ -1,3 +1,4 @@
+import { photoUrl } from "@/data/photos";
 /*
  * Design: Terra Viva — Mural da Comunidade
  * Área de mensagens/recados entre vizinhos do Campo Comprido
@@ -69,12 +70,12 @@ export default function Mural() {
       <Header />
 
       {/* Hero */}
-      <section className="pt-28 lg:pt-36 pb-12 relative overflow-hidden">
+      <section className="pt-28 lg:pt-36 pb-12 min-h-[320px] lg:min-h-[360px] relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="/manus-storage/mural-hero_655eb2af.jpg"
-            alt="Mural da Comunidade Campo Comprido"
-            className="w-full h-full object-cover"
+            src={photoUrl("rua-antonio-macioski.jpg")}
+            alt="Rua Antônio Macioski no Campo Comprido"
+            className="w-full h-full object-cover object-center"
           />
           <div className="absolute inset-0 bg-black/50" />
         </div>

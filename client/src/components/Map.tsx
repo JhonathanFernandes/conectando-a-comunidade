@@ -152,69 +152,43 @@ function LocalMap({
   initialCenter: google.maps.LatLngLiteral;
   markers?: LocalMapMarker[];
 }) {
-  const points = markers.length > 0 ? markers : [{ id: "center", title: "Campo Comprido", lat: initialCenter.lat, lng: initialCenter.lng }];
-  const lats = points.map((point) => point.lat);
-  const lngs = points.map((point) => point.lng);
-  const minLat = Math.min(...lats, initialCenter.lat) - 0.002;
-  const maxLat = Math.max(...lats, initialCenter.lat) + 0.002;
-  const minLng = Math.min(...lngs, initialCenter.lng) - 0.002;
-  const maxLng = Math.max(...lngs, initialCenter.lng) + 0.002;
-  const latSpan = maxLat - minLat || 0.01;
-  const lngSpan = maxLng - minLng || 0.01;
-
-  const toPosition = (lat: number, lng: number) => ({
-    left: `${Math.min(95, Math.max(5, ((lng - minLng) / lngSpan) * 100))}%`,
-    top: `${Math.min(92, Math.max(8, (1 - (lat - minLat) / latSpan) * 100))}%`,
-  });
+  const delta = 0.025;
+  const bbox = [
+    initialCenter.lng - delta,
+    initialCenter.lat - delta,
+    initialCenter.lng + delta,
+    initialCenter.lat + delta,
+  ].join(",");
+  const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik&marker=${initialCenter.lat}%2C${initialCenter.lng}`;
 
   return (
-    <div className={cn("relative w-full h-[500px] overflow-hidden bg-[oklch(0.91_0.03_95)]", className)}>
-      <div className="absolute inset-0 opacity-90">
-        <div className="absolute left-[-8%] top-[18%] h-3 w-[118%] rotate-[-7deg] rounded-full bg-[oklch(0.76_0.06_75)]" />
-        <div className="absolute left-[-12%] top-[48%] h-3 w-[124%] rotate-[5deg] rounded-full bg-[oklch(0.78_0.06_75)]" />
-        <div className="absolute left-[16%] top-[-10%] h-[125%] w-3 rotate-[19deg] rounded-full bg-[oklch(0.80_0.05_80)]" />
-        <div className="absolute left-[62%] top-[-10%] h-[125%] w-3 rotate-[-14deg] rounded-full bg-[oklch(0.80_0.05_80)]" />
-        <div className="absolute left-[3%] top-[72%] h-2 w-[96%] rotate-[-3deg] rounded-full bg-white/70" />
-        <div className="absolute left-[34%] top-[5%] h-[88%] w-2 rotate-[4deg] rounded-full bg-white/70" />
-      </div>
-
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_25%,oklch(0.82_0.08_150)_0,transparent_24%),radial-gradient(circle_at_78%_72%,oklch(0.78_0.08_150)_0,transparent_22%)] opacity-40" />
-
-      <div className="absolute right-4 top-4 rounded-lg border border-border bg-card/90 px-3 py-2 text-right shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Campo Comprido</p>
-        <p className="text-sm font-medium text-foreground">Mapa local interativo</p>
-      </div>
-
-      <div className="absolute bottom-4 left-4 rounded-lg border border-border bg-card/90 px-3 py-2 text-xs text-muted-foreground shadow-sm">
-        Pins aproximados por endereço
-      </div>
-
-      <span className="absolute left-[12%] top-[15%] rounded bg-card/75 px-2 py-1 text-[11px] font-medium text-muted-foreground">Eduardo Sprada</span>
-      <span className="absolute right-[10%] top-[48%] rounded bg-card/75 px-2 py-1 text-[11px] font-medium text-muted-foreground">Renato Polatti</span>
-      <span className="absolute left-[36%] bottom-[16%] rounded bg-card/75 px-2 py-1 text-[11px] font-medium text-muted-foreground">João Falarz</span>
-
-      {markers.map((marker, index) => {
-        const position = toPosition(marker.lat, marker.lng);
-        return (
-          <button
-            key={marker.id}
-            type="button"
-            onClick={marker.onClick}
-            className="group absolute z-10 -translate-x-1/2 -translate-y-full focus:outline-none"
-            style={position}
-            aria-label={marker.title}
-          >
-            <span className="block h-7 w-7 rounded-full border-2 border-white bg-[oklch(0.72_0.12_40)] shadow-lg transition-transform group-hover:scale-110">
-              <span className="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" />
-            </span>
-            <span className="absolute left-1/2 top-[-3.25rem] hidden w-44 -translate-x-1/2 rounded-lg border border-border bg-card px-3 py-2 text-left shadow-xl group-hover:block group-focus:block">
-              <span className="block truncate text-xs font-semibold text-foreground">{marker.title}</span>
-              {marker.subtitle && <span className="block truncate text-[11px] text-muted-foreground">{marker.subtitle}</span>}
-            </span>
-            <span className="sr-only">{index + 1}</span>
-          </button>
-        );
-      })}
+    <div className={cn("relative w-full h-[500px] overflow-hidden bg-muted", className)}>
+      <iframe
+        title="Mapa geográfico de Campo Comprido"
+        src={mapUrl}
+        className="h-full w-full border-0"
+        loading="lazy"
+        referrerPolicy="strict-origin-when-cross-origin"
+      />
+      {markers.length > 0 && (
+        <div className="absolute bottom-3 left-3 max-h-36 w-64 overflow-y-auto rounded-lg bg-card/95 p-2 shadow-lg">
+          <p className="mb-1 text-xs font-semibold">{markers.length} locais na seleção</p>
+          {markers.slice(0, 8).map((marker) => (
+            <button
+              type="button"
+              key={marker.id}
+              onClick={() => {
+                marker.onClick?.();
+                window.open(`https://www.openstreetmap.org/?mlat=${marker.lat}&mlon=${marker.lng}#map=17/${marker.lat}/${marker.lng}`, "_blank", "noopener,noreferrer");
+              }}
+              className="block w-full truncate rounded px-2 py-1 text-left text-xs hover:bg-muted"
+            >
+              {marker.title}
+            </button>
+          ))}
+        </div>
+      )}
+      <span className="absolute right-3 top-3 rounded bg-card/95 px-2 py-1 text-xs shadow">© OpenStreetMap</span>
     </div>
   );
 }
