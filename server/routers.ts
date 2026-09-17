@@ -3,7 +3,7 @@ import { z } from "zod";
 import { eq, desc } from "drizzle-orm";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { adminProcedure, publicProcedure, router } from "./_core/trpc";
 import { getDb } from "./db";
 import {
   commerces,
@@ -41,7 +41,7 @@ export const appRouter = router({
 
   // === Comércios ===
   commerce: router({
-    list: publicProcedure.query(async () => {
+    list: adminProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
       const rows = await db.select().from(commerces).orderBy(desc(commerces.createdAt));
@@ -50,7 +50,7 @@ export const appRouter = router({
     listApproved: publicProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
-      const rows = await db.select().from(commerces).orderBy(desc(commerces.createdAt));
+      const rows = await db.select().from(commerces).where(eq(commerces.status, "approved")).orderBy(desc(commerces.createdAt));
       return rows;
     }),
     add: publicProcedure
@@ -89,7 +89,7 @@ export const appRouter = router({
         const { url } = await storagePut(key, fileBuffer, input.mimeType);
         return { url, key };
       }),
-    updateStatus: publicProcedure
+    updateStatus: adminProcedure
       .input(z.object({ id: z.number(), status: z.enum(["pending", "approved", "rejected"]) }))
       .mutation(async ({ input }) => {
         const db = await getDb();
@@ -97,7 +97,7 @@ export const appRouter = router({
         await db.update(commerces).set({ status: input.status }).where(eq(commerces.id, input.id));
         return { success: true };
       }),
-    delete: publicProcedure
+    delete: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         const db = await getDb();
@@ -109,7 +109,7 @@ export const appRouter = router({
 
   // === Denúncias ===
   complaint: router({
-    list: publicProcedure.query(async () => {
+    list: adminProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
       return await db.select().from(complaints).orderBy(desc(complaints.createdAt));
@@ -130,7 +130,7 @@ export const appRouter = router({
         await db.insert(complaints).values({ ...input, status: "pending" });
         return { success: true };
       }),
-    updateStatus: publicProcedure
+    updateStatus: adminProcedure
       .input(z.object({ id: z.number(), status: z.enum(["pending", "resolved", "rejected"]) }))
       .mutation(async ({ input }) => {
         const db = await getDb();
@@ -138,7 +138,7 @@ export const appRouter = router({
         await db.update(complaints).set({ status: input.status }).where(eq(complaints.id, input.id));
         return { success: true };
       }),
-    delete: publicProcedure
+    delete: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         const db = await getDb();
@@ -150,7 +150,7 @@ export const appRouter = router({
 
   // === Sugestões ===
   suggestion: router({
-    list: publicProcedure.query(async () => {
+    list: adminProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
       return await db.select().from(suggestions).orderBy(desc(suggestions.createdAt));
@@ -171,7 +171,7 @@ export const appRouter = router({
         await db.insert(suggestions).values({ ...input, status: "pending" });
         return { success: true };
       }),
-    updateStatus: publicProcedure
+    updateStatus: adminProcedure
       .input(z.object({ id: z.number(), status: z.enum(["pending", "resolved", "rejected"]) }))
       .mutation(async ({ input }) => {
         const db = await getDb();
@@ -179,7 +179,7 @@ export const appRouter = router({
         await db.update(suggestions).set({ status: input.status }).where(eq(suggestions.id, input.id));
         return { success: true };
       }),
-    delete: publicProcedure
+    delete: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         const db = await getDb();
@@ -215,7 +215,7 @@ export const appRouter = router({
         await db.insert(events).values(input);
         return { success: true };
       }),
-    delete: publicProcedure
+    delete: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         const db = await getDb();
@@ -232,7 +232,7 @@ export const appRouter = router({
       if (!db) return [];
       return await db.select().from(usefulPhones).orderBy(usefulPhones.name);
     }),
-    add: publicProcedure
+    add: adminProcedure
       .input(
         z.object({
           name: z.string().min(1),
@@ -248,7 +248,7 @@ export const appRouter = router({
         await db.insert(usefulPhones).values(input);
         return { success: true };
       }),
-    delete: publicProcedure
+    delete: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         const db = await getDb();
@@ -286,7 +286,7 @@ export const appRouter = router({
         await addReviewDb(input);
         return { success: true };
       }),
-    delete: publicProcedure
+    delete: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         await deleteReviewDb(input.id);
@@ -299,7 +299,7 @@ export const appRouter = router({
     listApproved: publicProcedure.query(async () => {
       return await getApprovedMuralPostsDb();
     }),
-    listAll: publicProcedure.query(async () => {
+    listAll: adminProcedure.query(async () => {
       return await getAllMuralPostsDb();
     }),
     add: publicProcedure
@@ -318,13 +318,13 @@ export const appRouter = router({
         });
         return { success: true };
       }),
-    updateStatus: publicProcedure
+    updateStatus: adminProcedure
       .input(z.object({ id: z.number(), status: z.enum(["pending", "approved", "rejected"]) }))
       .mutation(async ({ input }) => {
         await updateMuralPostStatusDb(input.id, input.status);
         return { success: true };
       }),
-    delete: publicProcedure
+    delete: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         await deleteMuralPostDb(input.id);

@@ -1,3 +1,4 @@
+import { photoUrl } from "@/data/photos";
 /*
  * Design: Terra Viva — Telefones Úteis
  */
@@ -47,12 +48,12 @@ export default function Telefones() {
       <Header />
 
       {/* Hero */}
-      <section className="pt-28 lg:pt-36 pb-12 relative overflow-hidden">
+      <section className="pt-28 lg:pt-36 pb-12 min-h-[320px] lg:min-h-[360px] relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="/manus-storage/telefones-hero_18fc03d5.jpg"
-            alt="Corredor de ônibus do Campo Comprido"
-            className="w-full h-full object-cover" loading="eager"
+            src={photoUrl("terminal-campo-comprido.jpg")}
+            alt="Terminal Campo Comprido"
+            className="w-full h-full object-cover object-center" loading="eager"
           />
           <div className="absolute inset-0 bg-black/50" />
         </div>

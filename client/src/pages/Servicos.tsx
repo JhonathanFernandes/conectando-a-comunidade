@@ -1,5 +1,6 @@
+import { photoUrl as localPhotoUrl } from "@/data/photos";
 /*
- * Design: Terra Viva — Mapa de Serviços do Campo Comprido
+ * Design: Terra Viva — Mapa de Rua Antônio Macioski no Campo Comprido
  * Filtros agrupados em dropdown, mapa interativo automático,
  * cadastro de serviços pelo usuário, dados reais do bairro
  */
@@ -540,12 +541,12 @@ export default function Servicos() {
       <Header />
 
       {/* Hero with photo */}
-      <section className="pt-28 lg:pt-36 pb-12 relative overflow-hidden">
+      <section className="pt-28 lg:pt-36 pb-12 min-h-[320px] lg:min-h-[360px] relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="/manus-storage/campo-comprido-novo-6_3322afb1.jpg"
-            alt="Serviços do Campo Comprido"
-            className="w-full h-full object-cover" loading="eager"
+            src={localPhotoUrl("rua-antonio-macioski.jpg")}
+            alt="Rua Antônio Macioski no Campo Comprido"
+            className="w-full h-full object-cover object-center" loading="eager"
           />
           <div className="absolute inset-0 bg-black/50" />
         </div>

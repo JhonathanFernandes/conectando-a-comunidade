@@ -7,32 +7,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WaveDivider from "@/components/WaveDivider";
+import { neighborhoodPhotos, photoUrl } from "@/data/photos";
 
-interface Photo {
-  id: number;
-  src: string;
-  alt: string;
-  caption: string;
-}
-
-const photos: Photo[] = [
-  { id: 1, src: "/manus-storage/campo-comprido-novo-1_8562e62a.jpg", alt: "Vista panorâmica", caption: "Vista panorâmica do Campo Comprido — bairro, prédios e verde" },
-  { id: 2, src: "/manus-storage/parque-barigui-1_a184efe0.jpg", alt: "Parque Barigui", caption: "Parque Barigui — cartão postal ao lado do bairro" },
-  { id: 3, src: "/manus-storage/brt-canal-bus_ea471771.jpg", alt: "Canaleta de ônibus com flores", caption: "Canaleta de ônibus no Campo Comprido com ipês em flor na primavera" },
-  { id: 4, src: "/manus-storage/viaduto-orleans_754366df.jpg", alt: "Viaduto do Orleans", caption: "Viaduto do Orleans — ponto de referência do bairro" },
-  { id: 5, src: "/manus-storage/teatro-positivo-1_5a7c58e2.jpg", alt: "Teatro Positivo", caption: "Teatro Positivo — palco de grandes espetáculos ao lado do bairro" },
-  { id: 6, src: "/manus-storage/teatro-positivo-2_1cf99b5e.jpg", alt: "Teatro Positivo à noite", caption: "Teatro Positivo iluminado à noite" },
-  { id: 7, src: "/manus-storage/corredor-ipes_ce61de2c.jpg", alt: "Corredor de ônibus com ipês", caption: "Corredor de ônibus cercado por ipês roxos em flor" },
-  { id: 8, src: "/manus-storage/brt-corredor_17821a98.jpg", alt: "BRT canaleta", caption: "Estação do BRT no corredor de transporte do Campo Comprido" },
-  { id: 9, src: "/manus-storage/viaduto-orleans_63d2e314.jpg", alt: "Viaduto do Orleans", caption: "Viaduto do Orleans — ponto de referência do bairro" },
-  { id: 10, src: "/manus-storage/teatro-positivo-1_05da74ab.jpg", alt: "Teatro Positivo", caption: "Teatro Positivo — palco de grandes espetáculos ao lado do bairro" },
-  { id: 11, src: "/manus-storage/corredor-ipes_e6474f5e.jpg", alt: "Corredor de ônibus com ipês", caption: "Corredor de ônibus cercado por ipês roxos em flor" },
-  { id: 12, src: "/manus-storage/campo-comprido-aereo_9e4dd866.jpg", alt: "Residências", caption: "Vista aérea da região do Campo Comprido e Orleans" },
-  { id: 13, src: "/manus-storage/viaduto-orleans-2_b8e6e47a.jpg", alt: "Viaduto Orleans", caption: "Viaduto do Orleans visto de outro ângulo" },
-  { id: 14, src: "/manus-storage/teatro-positivo-3_c945d009.jpg", alt: "Teatro Positivo interior", caption: "Interior do Teatro Positivo" },
-  { id: 15, src: "/manus-storage/brt-canal-bus_ea471771.jpg", alt: "BRT em operação", caption: "Ônibus BRT transitando pela canaleta exclusiva" },
-  { id: 16, src: "/manus-storage/campo-comprido-aereo_4bb30e0b.jpg", alt: "Campo Comprido visto de cima", caption: "Vista aérea da região do Campo Comprido e Orleans" },
-];
+type Photo = (typeof neighborhoodPhotos)[number];
+const photos = neighborhoodPhotos;
 
 export default function Galeria() {
   const [lightbox, setLightbox] = useState<Photo | null>(null);
@@ -45,9 +23,17 @@ export default function Galeria() {
       <Header />
 
       {/* Hero */}
-      <section className="pt-28 lg:pt-36 pb-12 bg-secondary">
-        <div className="container">
-          <p className="text-primary font-medium text-sm uppercase tracking-widest mb-2">
+      <section className="pt-28 lg:pt-36 pb-12 min-h-[320px] lg:min-h-[360px] relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src={photoUrl("rua-antonio-macioski.jpg")}
+            alt="Rua Antônio Macioski no Campo Comprido"
+            className="w-full h-full object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-black/55" />
+        </div>
+        <div className="container relative z-10">
+          <p className="text-white/70 font-medium text-sm uppercase tracking-widest mb-2">
             Galeria
           </p>
           <h1 className="font-serif text-3xl lg:text-5xl font-bold text-foreground mb-4">
@@ -67,7 +53,7 @@ export default function Galeria() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {photos.map((photo) => (
               <button
-                key={photo.id}
+                key={photo.src}
                 onClick={() => openLightbox(photo)}
                 className="relative group overflow-hidden rounded-lg aspect-[4/3] cursor-pointer"
               >
@@ -113,7 +99,7 @@ export default function Galeria() {
               <p className="text-white font-medium">{lightbox.caption}</p>
               <div className="flex items-center gap-2 text-white/70 text-sm mt-1">
                 <Tag className="w-3.5 h-3.5" />
-                <span>Galeria do Campo Comprido</span>
+                <a href={lightbox.source} target="_blank" rel="noopener noreferrer" className="underline">Fonte e licença da foto</a>
               </div>
             </div>
           </motion.div>

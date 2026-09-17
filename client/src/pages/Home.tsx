@@ -3,56 +3,26 @@
  * Cards com bordas duplas terracota, uso mais forte de terracota como action color,
  * mais textura local e organicidade
  */
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, type ReactNode } from "react";
 import { Link } from "wouter";
 import {
   MapPin, Store, Calendar, AlertTriangle, Newspaper, Phone,
   ArrowRight, Users, Building2, HandHeart, ChevronLeft, ChevronRight,
-  Hospital, GraduationCap, Shield, Trees, ShoppingBag, Coffee, Quote
+  Hospital, GraduationCap, Shield, Trees, ShoppingBag, Coffee, Quote, ArrowUp
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import WaveDivider from "@/components/WaveDivider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { neighborhoodPhotos } from "@/data/photos";
+import { featuredCommerces } from "@/data/featuredCommerces";
 
-// Photos from Campo Comprido, Curitiba
-const carouselImages = [
-  {
-    src: "/manus-storage/campo-comprido-novo-1_8562e62a.jpg",
-    alt: "Vista panorâmica do Campo Comprido com lago",
-    caption: "A beleza do Campo Comprido ao longo do Barigui",
-  },
-  {
-    src: "/manus-storage/parque-barigui-1_a184efe0.jpg",
-    alt: "Bairro Campo Comprido - vista aérea",
-    caption: "Um bairro que une natureza e urbanidade",
-  },
-  {
-    src: "/manus-storage/viaduto-orleans_63d2e314.jpg",
-    alt: "Campo Comprido - paisagem urbana",
-    caption: "Parques, árvores e vida comunitária",
-  },
-  {
-    src: "/manus-storage/teatro-positivo-1_05da74ab.jpg",
-    alt: "Residências e edifícios do Campo Comprido",
-    caption: "Onde moradia se encontra com qualidade de vida",
-  },
-  {
-    src: "/manus-storage/corredor-ipes_e6474f5e.jpg",
-    alt: "Skyline do Campo Comprido",
-    caption: "O horizonte de um bairro em crescimento",
-  },
-  {
-    src: "/manus-storage/campo-comprido-aereo_9e4dd866.jpg",
-    alt: "Lago e área verde do Campo Comprido",
-    caption: "Áreas verdes que tornam o bairro especial",
-  },
-];
+const carouselImages = neighborhoodPhotos;
 
 const stats = [
   { number: "30.000", label: "Moradores (Censo 2022)", icon: <Users className="w-6 h-6" /> },
   { number: "3,72 km²", label: "Área do Bairro", icon: <MapPin className="w-6 h-6" /> },
-  { number: "150+", label: "Comércios Locais", icon: <Store className="w-6 h-6" /> },
+  { number: String(featuredCommerces.length), label: "Locais catalogados", icon: <Store className="w-6 h-6" /> },
   { number: "151+", label: "Serviços Mapeados", icon: <Building2 className="w-6 h-6" /> },
 ];
 
@@ -74,7 +44,89 @@ const serviceCategories = [
   { icon: <Coffee className="w-6 h-6" />, label: "Alimentação", count: 20 },
 ];
 
+function useRevealTrigger(resetKey: number) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    setVisible(false);
+    const checkPosition = () => {
+      if (ref.current && ref.current.getBoundingClientRect().top <= window.innerHeight * 0.9) {
+        setVisible(true);
+      }
+    };
+    checkPosition();
+    window.addEventListener("scroll", checkPosition, { passive: true });
+    window.addEventListener("resize", checkPosition);
+    return () => {
+      window.removeEventListener("scroll", checkPosition);
+      window.removeEventListener("resize", checkPosition);
+    };
+  }, [resetKey]);
+
+  return { ref, visible };
+}
+
+function StatRevealCard({ stat, index, resetKey }: { stat: typeof stats[number]; index: number; resetKey: number }) {
+  const reducedMotion = useReducedMotion();
+  const { ref, visible } = useRevealTrigger(resetKey);
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={false}
+      animate={reducedMotion || visible ? { opacity: 1, x: 0 } : { opacity: 0, x: -70 }}
+      transition={{ duration: 0.4, delay: index * 0.13, ease: "easeOut" }}
+      className="text-center p-6 rounded-xl relative overflow-hidden bg-card border border-border"
+    >
+      <div className="absolute top-0 left-0 right-0 h-1 bg-[oklch(0.72_0.12_40)]" />
+      <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4 mt-2">
+        {stat.icon}
+      </div>
+      <motion.div initial={false} animate={reducedMotion || visible ? { opacity: 1, x: 0 } : { opacity: 0, x: -18 }} transition={{ duration: 0.4, delay: index * 0.13 + 0.23, ease: "easeOut" }}>
+        <p className="font-serif text-3xl lg:text-4xl font-bold text-[oklch(0.72_0.12_40)] mb-1">
+          {stat.number}
+        </p>
+        <p className="text-sm text-muted-foreground">{stat.label}</p>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function SequentialReveal({ children, index, resetKey, className = "" }: { children: ReactNode; index: number; resetKey: number; className?: string }) {
+  const reducedMotion = useReducedMotion();
+  const { ref, visible } = useRevealTrigger(resetKey);
+
+  return (
+    <motion.div ref={ref} className={className} initial={false} animate={reducedMotion || visible ? { opacity: 1, x: 0 } : { opacity: 0, x: -60 }} transition={{ duration: 0.4, delay: (index % 3) * 0.12, ease: "easeOut" }}>
+      <motion.div className="h-full" initial={false} animate={reducedMotion || visible ? { opacity: 1 } : { opacity: 0 }} transition={{ duration: 0.4, delay: (index % 3) * 0.12 + 0.22 }}>
+        {children}
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function RevealText({ children, className = "", resetKey, delay = 0 }: { children: ReactNode; className?: string; resetKey: number; delay?: number }) {
+  const reducedMotion = useReducedMotion();
+  const { ref, visible } = useRevealTrigger(resetKey);
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      initial={false}
+      animate={reducedMotion || visible ? { opacity: 1, x: 0 } : { opacity: 0, x: -45 }}
+      transition={{ duration: 0.5, delay, ease: "easeOut" }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 export default function Home() {
+  const reducedMotion = useReducedMotion();
+  const [revealCycle, setRevealCycle] = useState(0);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const resetAtTopRef = useRef(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const autoPlayRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -82,6 +134,24 @@ export default function Home() {
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
   const SWIPE_THRESHOLD = 50;
+
+  useEffect(() => {
+    const onScroll = () => {
+      setShowBackToTop(window.scrollY > 500);
+      if (resetAtTopRef.current && window.scrollY <= 20) {
+        resetAtTopRef.current = false;
+        setRevealCycle((cycle) => cycle + 1);
+      }
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const backToTop = () => {
+    resetAtTopRef.current = true;
+    window.scrollTo({ top: 0, behavior: reducedMotion ? "auto" : "smooth" });
+  };
 
   useEffect(() => {
     if (isAutoPlaying) {
@@ -129,7 +199,7 @@ export default function Home() {
               i === currentSlide ? "opacity-100" : "opacity-0"
             }`}
           >
-            <img src={img.src} alt={img.alt} className="w-full h-full object-cover" />
+            <img src={img.src} alt={img.alt} className="w-full h-full object-cover object-center" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/40 to-black/35" />
           </div>
         ))}
@@ -146,23 +216,6 @@ export default function Home() {
               <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">
                 {carouselImages[currentSlide].caption}
               </h1>
-              <p className="text-white/80 text-lg mb-8 max-w-lg mx-auto">
-                Conectando moradores, serviços e oportunidades do Campo Comprido. Juntos, fazemos a diferença.
-              </p>
-              <div className="flex flex-wrap gap-3 justify-center">
-                <Link
-                  href="/servicos"
-                  className="inline-flex items-center gap-2 bg-[oklch(0.72_0.12_40)] text-white px-6 py-3 rounded-lg font-medium hover:bg-[oklch(0.65_0.12_40)] transition-all hover:scale-[1.02] active:scale-[0.97] shadow-lg shadow-[oklch(0.72_0.12_40)]/30"
-                >
-                  Explorar Serviços <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link
-                  href="/denuncias"
-                  className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm text-white px-6 py-3 rounded-lg font-medium hover:bg-white/25 transition-all"
-                >
-                  Fazer Denúncia
-                </Link>
-              </div>
             </motion.div>
           </div>
         </div>
@@ -201,35 +254,20 @@ export default function Home() {
       <WaveDivider color="oklch(0.97 0.015 80)" />
 
       {/* ===== ESTATÍSTICAS ===== */}
-      <section className="py-16 lg:py-20 bg-background">
-        <div className="container">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            {stats.map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1, duration: 0.4 }}
-                viewport={{ once: true }}
-                className="text-center p-6 rounded-xl relative overflow-hidden bg-card border border-border"
-              >
-                {/* Terracotta accent line at top */}
-                <div className="absolute top-0 left-0 right-0 h-1 bg-[oklch(0.72_0.12_40)]" />
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4 mt-2">
-                  {stat.icon}
-                </div>
-                <p className="font-serif text-3xl lg:text-4xl font-bold text-[oklch(0.72_0.12_40)] mb-1">
-                  {stat.number}
-                </p>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-              </motion.div>
-            ))}
+      <section className="py-10 lg:py-12 bg-background">
+        <div>
+          <div className="container">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+              {stats.map((stat, i) => (
+                <StatRevealCard key={stat.label} stat={stat} index={i} resetKey={revealCycle} />
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
       {/* ===== ACESSO RÁPIDO ===== */}
-      <section className="py-16 lg:py-20 relative">
+      <section className="pt-10 pb-14 lg:pt-12 lg:pb-16 relative">
         {/* Subtle topographic pattern background */}
         <div className="absolute inset-0 opacity-[0.03]"
           style={{
@@ -238,24 +276,18 @@ export default function Home() {
           }}
         />
         <div className="container relative z-10">
-          <div className="text-center mb-12">
+          <RevealText resetKey={revealCycle} className="text-center mb-8">
             <p className="text-[oklch(0.72_0.12_40)] font-medium text-sm uppercase tracking-[0.2em] mb-2">
               Navegação Rápida
             </p>
             <h2 className="font-serif text-3xl lg:text-4xl font-bold text-foreground">
               Tudo que você precisa em um só lugar
             </h2>
-          </div>
+          </RevealText>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {quickLinks.map((link, i) => (
-              <motion.div
-                key={link.href}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.06, duration: 0.4 }}
-                viewport={{ once: true }}
-              >
+              <SequentialReveal key={link.href} index={i} resetKey={revealCycle}>
                 <Link
                   href={link.href}
                   className="group flex items-start gap-4 p-5 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg bg-card border border-border"
@@ -271,41 +303,37 @@ export default function Home() {
                   </div>
                   <ArrowRight className="w-4 h-4 text-muted-foreground ml-auto mt-1 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0 group-hover:text-[oklch(0.72_0.12_40)]" />
                 </Link>
-              </motion.div>
+              </SequentialReveal>
             ))}
           </div>
         </div>
       </section>
 
       {/* ===== CATEGORIAS DE SERVIÇOS ===== */}
-      <section className="py-16 lg:py-20 bg-secondary">
+      <section className="pt-14 pb-10 lg:pt-16 lg:pb-12 bg-secondary">
         <div className="container">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 gap-4">
-            <div>
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-8 gap-4">
+            <RevealText resetKey={revealCycle}>
               <p className="text-[oklch(0.72_0.12_40)] font-medium text-sm uppercase tracking-[0.2em] mb-2">
                 Mapa de Serviços
               </p>
               <h2 className="font-serif text-3xl lg:text-4xl font-bold text-foreground">
                 Encontre o que precisa no bairro
               </h2>
-            </div>
+            </RevealText>
+            <RevealText resetKey={revealCycle} delay={0.12}>
             <Link
               href="/servicos"
               className="inline-flex items-center gap-2 text-[oklch(0.72_0.12_40)] font-medium hover:gap-3 transition-all"
             >
               Ver todos os serviços <ArrowRight className="w-4 h-4" />
             </Link>
+            </RevealText>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {serviceCategories.map((cat, i) => (
-              <motion.div
-                key={cat.label}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.05, duration: 0.3 }}
-                viewport={{ once: true }}
-              >
+              <SequentialReveal key={cat.label} index={i} resetKey={revealCycle}>
                 <Link
                   href="/servicos"
                   className="flex flex-col items-center gap-3 p-5 rounded-xl transition-all group bg-card border border-border"
@@ -316,23 +344,23 @@ export default function Home() {
                   <span className="font-medium text-sm text-center text-foreground">{cat.label}</span>
                   <span className="text-xs text-muted-foreground">{cat.count} locais</span>
                 </Link>
-              </motion.div>
+              </SequentialReveal>
             ))}
           </div>
         </div>
       </section>
 
       {/* ===== COMO FUNCIONA ===== */}
-      <section className="py-16 lg:py-20 bg-background">
+      <section className="py-10 lg:py-12 bg-background">
         <div className="container">
-          <div className="text-center mb-12">
+          <RevealText resetKey={revealCycle} className="text-center mb-8">
             <p className="text-[oklch(0.72_0.12_40)] font-medium text-sm uppercase tracking-[0.2em] mb-2">
               Como Funciona
             </p>
             <h2 className="font-serif text-3xl lg:text-4xl font-bold text-foreground">
               Participe da comunidade em 3 passos
             </h2>
-          </div>
+          </RevealText>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 max-w-4xl mx-auto">
             {[
@@ -352,14 +380,7 @@ export default function Home() {
                 desc: "Interaja com vizinhos, avalie serviços e fique por dentro das novidades.",
               },
             ].map((item, i) => (
-              <motion.div
-                key={item.step}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.15, duration: 0.4 }}
-                viewport={{ once: true }}
-                className="relative text-center"
-              >
+              <SequentialReveal key={item.step} index={i} resetKey={revealCycle} className="relative text-center">
                 <div className="w-16 h-16 rounded-full bg-[oklch(0.72_0.12_40)] text-white font-serif text-2xl font-bold flex items-center justify-center mx-auto mb-5 shadow-lg shadow-[oklch(0.72_0.12_40)]/25">
                   {item.step}
                 </div>
@@ -370,29 +391,31 @@ export default function Home() {
                 {i < 2 && (
                   <div className="hidden md:block absolute top-8 left-[calc(50%+40px)] w-[calc(100%-80px)] h-0.5 bg-primary/20" />
                 )}
-              </motion.div>
+              </SequentialReveal>
             ))}
           </div>
         </div>
       </section>
 
       {/* ===== GALERIA / FOTOS ===== */}
-      <section className="py-16 lg:py-20 bg-secondary">
+      <section className="py-10 lg:py-12 bg-secondary">
         <div className="container">
-          <div className="text-center mb-10">
+          <RevealText resetKey={revealCycle} className="text-center mb-8">
             <p className="text-[oklch(0.72_0.12_40)] font-medium text-sm uppercase tracking-[0.2em] mb-2">
               Galeria
             </p>
             <h2 className="font-serif text-3xl lg:text-4xl font-bold text-foreground">
               O Campo Comprido em imagens
             </h2>
-          </div>
+          </RevealText>
 
           {/* Featured photo strip */}
           <div className="grid grid-cols-3 gap-3 max-w-4xl mx-auto">
             {carouselImages.slice(0, 3).map((img, i) => (
-              <div
+              <SequentialReveal
                 key={i}
+                index={i}
+                resetKey={revealCycle}
                 className="relative rounded-xl overflow-hidden aspect-[4/3] group"
               >
                 <img
@@ -402,22 +425,22 @@ export default function Home() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <p className="absolute bottom-3 left-3 text-white text-sm opacity-0 group-hover:opacity-100 transition-opacity">{img.caption}</p>
-              </div>
+              </SequentialReveal>
             ))}
           </div>
-          <div className="text-center mt-6">
+          <RevealText resetKey={revealCycle} className="text-center mt-6">
             <Link
               href="/galeria"
               className="inline-flex items-center gap-2 text-[oklch(0.72_0.12_40)] font-medium hover:gap-3 transition-all"
             >
               Ver galeria completa <ArrowRight className="w-4 h-4" />
             </Link>
-          </div>
+          </RevealText>
         </div>
       </section>
 
       {/* ===== DEPOIMENTOS ===== */}
-      <section className="py-16 lg:py-20 bg-background relative">
+      <section className="py-10 lg:py-12 bg-background relative">
         <div className="absolute inset-0 opacity-[0.03]"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5 Q50 15 55 35 Q50 55 30 50 Q10 55 5 35 Q10 15 30 5Z' fill='none' stroke='oklch(0.45 0.08 160)' stroke-width='0.5'/%3E%3C/svg%3E")`,
@@ -425,14 +448,14 @@ export default function Home() {
           }}
         />
         <div className="container relative z-10">
-          <div className="text-center mb-12">
+          <RevealText resetKey={revealCycle} className="text-center mb-8">
             <p className="text-[oklch(0.72_0.12_40)] font-medium text-sm uppercase tracking-[0.2em] mb-2">
               Vozes da Comunidade
             </p>
             <h2 className="font-serif text-3xl lg:text-4xl font-bold text-foreground">
               O que dizem os moradores
             </h2>
-          </div>
+          </RevealText>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {[
@@ -452,14 +475,7 @@ export default function Home() {
                 text: "Participar das ações da comunidade me fez conhecer vizinhos que agora são amigos. O bairro tem uma energia especial e a plataforma ajuda a manter essa conexão.",
               },
             ].map((dep, i) => (
-              <motion.div
-                key={dep.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1, duration: 0.4 }}
-                viewport={{ once: true }}
-                className="p-6 rounded-xl relative bg-card border border-border"
-              >
+              <SequentialReveal key={dep.name} index={i} resetKey={revealCycle} className="p-6 rounded-xl relative bg-card border border-border">
                 <Quote className="w-8 h-8 text-[oklch(0.72_0.12_40)]/30 mb-3" />
                 <p className="text-sm text-foreground/80 leading-relaxed mb-4 italic">
                   "{dep.text}"
@@ -473,7 +489,7 @@ export default function Home() {
                     <p className="text-xs text-muted-foreground">{dep.role}</p>
                   </div>
                 </div>
-              </motion.div>
+              </SequentialReveal>
             ))}
           </div>
         </div>
@@ -482,7 +498,7 @@ export default function Home() {
       <WaveDivider color="oklch(0.72 0.12 40)" />
 
       {/* ===== CHAMADA PARA AÇÃO ===== */}
-      <section className="py-20 lg:py-24 bg-[oklch(0.72_0.12_40)] relative overflow-hidden">
+      <section className="py-12 lg:py-16 bg-[oklch(0.72_0.12_40)] relative overflow-hidden">
         <div className="absolute inset-0 opacity-15">
           <div className="absolute top-10 left-10 w-64 h-64 rounded-full bg-white/20 blur-3xl" />
           <div className="absolute bottom-10 right-10 w-96 h-96 rounded-full bg-white/10 blur-3xl" />
@@ -490,12 +506,17 @@ export default function Home() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-white/5" />
         </div>
         <div className="container relative z-10 text-center">
+          <RevealText resetKey={revealCycle}>
           <h2 className="font-serif text-3xl lg:text-5xl font-bold text-white mb-4">
             Conectando a Comunidade.
           </h2>
+          </RevealText>
+          <RevealText resetKey={revealCycle} delay={0.1}>
           <p className="text-white/80 text-lg mb-8 max-w-xl mx-auto">
             Somos o Campo Comprido. Cada voz conta na construção de um bairro melhor.
           </p>
+          </RevealText>
+          <RevealText resetKey={revealCycle} delay={0.2}>
           <div className="flex flex-wrap justify-center gap-4">
             <Link
               href="/denuncias"
@@ -510,10 +531,22 @@ export default function Home() {
               Conheça o Projeto
             </Link>
           </div>
+          </RevealText>
         </div>
       </section>
 
       <Footer />
+      {showBackToTop && (
+        <button
+          type="button"
+          onClick={backToTop}
+          className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 rounded-full bg-[oklch(0.72_0.12_40)] px-4 py-3 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-[oklch(0.65_0.12_40)]"
+          aria-label="Voltar ao topo"
+        >
+          <ArrowUp className="h-5 w-5" />
+          <span className="hidden sm:inline">Voltar ao topo</span>
+        </button>
+      )}
     </div>
   );
 }

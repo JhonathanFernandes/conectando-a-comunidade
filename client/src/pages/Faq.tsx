@@ -1,3 +1,4 @@
+import { photoUrl } from "@/data/photos";
 /*
  * Design: Terra Viva — FAQ
  */
@@ -50,9 +51,17 @@ export default function Faq() {
       <Header />
 
       {/* Hero */}
-      <section className="pt-28 lg:pt-36 pb-12 bg-secondary relative">
-        <div className="container">
-          <p className="text-primary font-medium text-sm uppercase tracking-widest mb-2">
+      <section className="pt-28 lg:pt-36 pb-12 min-h-[320px] lg:min-h-[360px] relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src={photoUrl("rua-pedro-zanlorenzi.jpg")}
+            alt="Araucária na Rua Pedro Artur Zanlorenzi no Campo Comprido"
+            className="w-full h-full object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-black/55" />
+        </div>
+        <div className="container relative z-10">
+          <p className="text-white/70 font-medium text-sm uppercase tracking-widest mb-2">
             Perguntas Frequentes
           </p>
           <h1 className="font-serif text-3xl lg:text-5xl font-bold text-foreground mb-4">

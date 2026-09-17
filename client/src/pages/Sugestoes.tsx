@@ -1,3 +1,4 @@
+import { photoUrl } from "@/data/photos";
 /*
  * Design: Terra Viva — Sugestões e Reclamações
  */
@@ -68,12 +69,12 @@ export default function Sugestoes() {
       <Header />
 
       {/* Hero */}
-      <section className="pt-28 lg:pt-36 pb-12 relative overflow-hidden">
+      <section className="pt-28 lg:pt-36 pb-12 min-h-[320px] lg:min-h-[360px] relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="/manus-storage/sugestoes-hero_f9c5cd3c.jpg"
-            alt="Comunidade"
-            className="w-full h-full object-cover"
+            src={photoUrl("rua-antonio-macioski.jpg")}
+            alt="Rua Antônio Macioski no Campo Comprido"
+            className="w-full h-full object-cover object-center"
           />
           <div className="absolute inset-0 bg-black/50" />
         </div>

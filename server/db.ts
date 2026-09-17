@@ -105,7 +105,7 @@ export async function addReview(data: {
   comment?: string;
 }) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) throw new Error("Database not available");
   const result = await db.insert(reviews).values({ ...data });
   return result;
 }
@@ -130,7 +130,7 @@ export async function getAllReviews(targetType: "commerce" | "service") {
 
 export async function deleteReview(id: number) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) throw new Error("Database not available");
   return await db.delete(reviews).where(eq(reviews.id, id));
 }
 
@@ -138,7 +138,7 @@ export async function deleteReview(id: number) {
 
 export async function addMuralPost(data: { authorName: string; category: string; message: string }) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) throw new Error("Database not available");
   return await db.insert(muralPosts).values({ ...data });
 }
 
@@ -156,12 +156,12 @@ export async function getAllMuralPosts() {
 
 export async function updateMuralPostStatus(id: number, status: "pending" | "approved" | "rejected") {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) throw new Error("Database not available");
   return await db.update(muralPosts).set({ status }).where(eq(muralPosts.id, id));
 }
 
 export async function deleteMuralPost(id: number) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) throw new Error("Database not available");
   return await db.delete(muralPosts).where(eq(muralPosts.id, id));
 }

@@ -1,3 +1,4 @@
+import { photoUrl } from "@/data/photos";
 /*
  * Design: Terra Viva — Notícias do Bairro
  */
@@ -9,7 +10,7 @@ import Footer from "@/components/Footer";
 import WaveDivider from "@/components/WaveDivider";
 
 const newsCategories = [
-  "Todas", "Segurança", "Obras", "Eventos", "Prefeitura", "Saúde", "Educação",
+  "Todas", "Obras", "Prefeitura",
 ];
 
 interface NewsItem {
@@ -18,18 +19,15 @@ interface NewsItem {
   category: string;
   date: string;
   excerpt: string;
-  image?: string;
+  url: string;
 }
 
 const news: NewsItem[] = [
-  { id: 1, title: "Curitiba anuncia expansão do BRT e melhorias no transporte do Campo Comprido", category: "Obras", date: "18/08/2026", excerpt: "A Prefeitura de Curitiba confirmou o investimento de R$ 50 milhões na modernização do corredor de ônibus que passa pelo bairro, com novos veículos e estações reformadas até 2027." },
-  { id: 2, title: "Campanha de vacinação contra dengue e gripe mobiliza UBS do bairro", category: "Saúde", date: "15/08/2026", excerpt: "A UBS Campo Comprido está com a campanha de multivacinação ativa até o fim do mês. Moradores podem se vacinar de segunda a sexta, das 8h às 17h, sem agendamento prévio." },
-  { id: 3, title: "Festival de Inverno do Campo Comprido reúne mais de 2 mil moradores", category: "Eventos", date: "12/08/2026", excerpt: "O evento realizado na Praça Getúlio Vargas contou com apresentações de artistas locais, comida típica e atividades para crianças, consolidando-se como tradição do bairro." },
-  { id: 4, title: "Novo posto da Guarda Municipal reforça segurança na região do Terminal", category: "Segurança", date: "09/08/2026", excerpt: "A Guarda Municipal inaugurou um novo posto de atendimento nas proximidades do Terminal Campo Comprido, com rondas ampliadas e base comunitária para denúncias em tempo real." },
-  { id: 5, title: "Escolas municipais recebem investimento em tecnologia e quadras poliesportivas", category: "Educação", date: "05/08/2026", excerpt: "As escolas do Campo Comprido receberam tablets, projetores e reforma das quadras esportivas com recursos do programa de infraestrutura educacional da Prefeitura de Curitiba." },
-  { id: 6, title: "Parque Barigui ganha novo trecho de canaleta de ônibus e ciclovia integrada", category: "Obras", date: "01/08/2026", excerpt: "A obra de 2 km conecta o Campo Comprido ao resto do corredor de transporte, com faixas exclusivas para bicicletas e pedestres ao longo do parque." },
-  { id: 7, title: "Teatro Positivo anuncia temporada gratuita para moradores de bairros vizinhos", category: "Eventos", date: "28/07/2026", excerpt: "Espetáculos de dança, música e teatro serão oferecidos com ingressos gratuitos para moradores da região do Campo Comprido, Orleans e Barigui, mediante cadastro no site." },
-  { id: 8, title: "Feira de produtores locais estreia no Terminal Campo Comprido", category: "Prefeitura", date: "25/07/2026", excerpt: "A nova feira acontece aos sábados no entorno do terminal, com alimentos orgânicos, artesanato e produtos de agricultores da região metropolitana de Curitiba." },
+  { id: 1, title: "Recuperação de galeria pluvial na Rua Eduardo Sprada", category: "Obras", date: "23/07/2026", excerpt: "A Prefeitura informou uma intervenção na Rua Eduardo Sprada, no Campo Comprido, para recuperação de galeria pluvial.", url: "https://www.curitiba.pr.gov.br/noticias/recuperacao-de-galeria-pluvial-altera-transito-na-rua-eduardo-sprada-no-campo-comprido/84226" },
+  { id: 2, title: "Obra na Major Heitor Guimarães afeta acesso à região", category: "Obras", date: "2026", excerpt: "A Prefeitura publicou informações sobre as obras no corredor que liga a BR-277 aos bairros da região do Campo Comprido.", url: "https://www.curitiba.pr.gov.br/noticias/major-heitor-guimaraes-passa-por-obra-complexa-para-melhoria-do-transporte-publico-e-da-regiao/83234" },
+  { id: 3, title: "Licitação para novos terminais Campo Comprido e Centenário", category: "Prefeitura", date: "2026", excerpt: "Foi aberto processo de licitação para construir os novos terminais do projeto BRT Leste/Oeste.", url: "https://www.curitiba.pr.gov.br/noticias/licitacao-para-construcao-dos-novos-terminais-campo-comprido-e-centenario-esta-aberta/82574" },
+  { id: 4, title: "Área de macrodrenagem vira parque no Campo Comprido", category: "Obras", date: "31/03/2026", excerpt: "Obra às margens do Rio Mossunguê combina prevenção de alagamentos e novo espaço de lazer.", url: "https://www.curitiba.pr.gov.br/noticias/obra-de-macrodrenagem-transforma-area-do-campo-comprido-em-novo-parque-de-curitiba/82444" },
+  { id: 5, title: "Projeto habitacional para famílias da Vila Santos Andrade", category: "Prefeitura", date: "20/02/2026", excerpt: "A Prefeitura apresentou avanço no projeto de regularização fundiária e reassentamento no Campo Comprido.", url: "https://www.curitiba.pr.gov.br/noticias/curitiba-avanca-em-solucao-habitacional-e-ambiental-para-300-familias-no-campo-comprido/81788" },
 ];
 
 export default function Noticias() {
@@ -56,12 +54,12 @@ export default function Noticias() {
       <Header />
 
       {/* Hero */}
-      <section className="pt-28 lg:pt-36 pb-12 relative overflow-hidden">
+      <section className="pt-28 lg:pt-36 pb-12 min-h-[320px] lg:min-h-[360px] relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="/manus-storage/noticias-hero_20a2e9aa.png"
-            alt="Notícias do Campo Comprido"
-            className="w-full h-full object-cover"
+            src={photoUrl("terminal-campo-comprido.jpg")}
+            alt="Terminal Campo Comprido"
+            className="w-full h-full object-cover object-center"
           />
           <div className="absolute inset-0 bg-black/50" />
         </div>
@@ -134,7 +132,7 @@ export default function Noticias() {
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="w-4 h-4" />
                 <span>{filtered[0].date}</span>
-                <ArrowRight className="w-4 h-4 ml-auto text-primary cursor-pointer" />
+                <a href={filtered[0].url} target="_blank" rel="noopener noreferrer" className="ml-auto inline-flex items-center gap-1 text-primary hover:underline">Ler na fonte <ArrowRight className="w-4 h-4" /></a>
               </div>
             </div>
           )}
@@ -156,6 +154,7 @@ export default function Noticias() {
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Calendar className="w-3.5 h-3.5" />
                   <span>{item.date}</span>
+                  <a href={item.url} target="_blank" rel="noopener noreferrer" className="ml-auto text-primary hover:underline">Ler na fonte</a>
                 </div>
               </article>
             ))}

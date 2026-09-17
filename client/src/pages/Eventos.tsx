@@ -1,3 +1,4 @@
+import { photoUrl } from "@/data/photos";
 /*
  * Design: Terra Viva — Eventos da Comunidade
  * Filtros agrupados em dropdown, terracota como cor de ação
@@ -107,12 +108,12 @@ export default function Eventos() {
       <Header />
 
       {/* Hero */}
-      <section className="pt-28 lg:pt-36 pb-12 relative overflow-hidden">
+      <section className="pt-28 lg:pt-36 pb-12 min-h-[320px] lg:min-h-[360px] relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="/manus-storage/eventos-hero_83775eb4.jpg"
-            alt="Eventos do Campo Comprido"
-            className="w-full h-full object-cover"
+            src={photoUrl("rua-do-outono.jpg")}
+            alt="Árvores coloridas na canaleta da Rua Deputado Heitor Alencar Furtado"
+            className="w-full h-full object-cover object-center"
           />
           <div className="absolute inset-0 bg-black/50" />
         </div>

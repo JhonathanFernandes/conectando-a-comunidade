@@ -1,3 +1,4 @@
+import { photoUrl } from "@/data/photos";
 /*
  * Design: Terra Viva — Sobre o Projeto
  */
@@ -12,11 +13,11 @@ export default function Sobre() {
       <Header />
 
       {/* Hero com foto */}
-      <section className="relative pt-28 lg:pt-36 pb-16 overflow-hidden">
+      <section className="relative pt-28 lg:pt-36 pb-16 min-h-[320px] lg:min-h-[360px] overflow-hidden">
         <img
-          src="/manus-storage/campo-comprido-aereo_4bb30e0b.jpg"
-          alt="Vista aérea do Campo Comprido"
-          className="absolute inset-0 w-full h-full object-cover"
+          src={photoUrl("predios-campo-comprido.jpg")}
+          alt="Edifícios residenciais no Campo Comprido"
+          className="absolute inset-0 w-full h-full object-cover object-center"
         />
         <div className="absolute inset-0 bg-black/60" />
         <div className="container relative z-10 text-center">

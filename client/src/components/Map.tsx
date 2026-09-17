@@ -117,6 +117,66 @@ interface MapViewProps {
   initialCenter?: google.maps.LatLngLiteral;
   initialZoom?: number;
   onMapReady?: (map: google.maps.Map) => void;
+  fallbackMarkers?: LocalMapMarker[];
+}
+
+export interface LocalMapMarker {
+  id: string | number;
+  title: string;
+  subtitle?: string;
+  lat: number;
+  lng: number;
+  onClick?: () => void;
+}
+
+function LocalMap({
+  className,
+  initialCenter,
+  markers = [],
+}: {
+  className?: string;
+  initialCenter: google.maps.LatLngLiteral;
+  markers?: LocalMapMarker[];
+}) {
+  const delta = 0.025;
+  const bbox = [
+    initialCenter.lng - delta,
+    initialCenter.lat - delta,
+    initialCenter.lng + delta,
+    initialCenter.lat + delta,
+  ].join(",");
+  const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik&marker=${initialCenter.lat}%2C${initialCenter.lng}`;
+
+  return (
+    <div className={cn("relative w-full h-[500px] overflow-hidden bg-muted", className)}>
+      <iframe
+        title="Mapa geográfico de Campo Comprido"
+        src={mapUrl}
+        className="h-full w-full border-0"
+        loading="lazy"
+        referrerPolicy="strict-origin-when-cross-origin"
+      />
+      {markers.length > 0 && (
+        <div className="absolute bottom-3 left-3 max-h-36 w-64 overflow-y-auto rounded-lg bg-card/95 p-2 shadow-lg">
+          <p className="mb-1 text-xs font-semibold">{markers.length} locais na seleção</p>
+          {markers.slice(0, 8).map((marker) => (
+            <button
+              type="button"
+              key={marker.id}
+              onClick={() => {
+                marker.onClick?.();
+                window.open(`https://www.openstreetmap.org/?mlat=${marker.lat}&mlon=${marker.lng}#map=17/${marker.lat}/${marker.lng}`, "_blank", "noopener,noreferrer");
+              }}
+              className="block w-full truncate rounded px-2 py-1 text-left text-xs hover:bg-muted"
+            >
+              {marker.title}
+            </button>
+          ))}
+        </div>
+      )}
+      <span className="absolute right-3 top-3 rounded bg-card/95 px-2 py-1 text-xs shadow">© OpenStreetMap</span>
+    </div>
+  );
 }
 
 export function MapView({
