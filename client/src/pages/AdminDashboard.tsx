@@ -12,7 +12,6 @@ import {
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
-import AdminDemo from "./AdminDemo";
 
 const statusMap: Record<string, string> = {
   "pending": "Pendente",
@@ -474,5 +473,11 @@ function AuthenticatedAdminDashboard() {
 }
 
 export default function AdminDashboard() {
-  return import.meta.env.BASE_URL !== "/" ? <AdminDemo /> : <AuthenticatedAdminDashboard />;
+  return import.meta.env.BASE_URL !== "/" ? <StaticAdminRedirect /> : <AuthenticatedAdminDashboard />;
+}
+
+function StaticAdminRedirect() {
+  const [, navigate] = useLocation();
+  useEffect(() => navigate("/admin"), [navigate]);
+  return null;
 }
