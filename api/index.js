@@ -134,7 +134,7 @@ var decodeOAuthState = (state) => {
 
 // server/routers.ts
 import { z as z2 } from "zod";
-import { eq as eq2, desc as desc2 } from "drizzle-orm";
+import { eq as eq3, desc as desc3 } from "drizzle-orm";
 
 // server/_core/cookies.ts
 function isSecureRequest(req) {
@@ -372,7 +372,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 // drizzle/schema.ts
-import { integer, pgEnum, pgTable, serial, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, date, index, integer, pgEnum, pgTable, serial, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
 var userRole = pgEnum("user_role", ["user", "admin"]);
 var approvalStatus = pgEnum("approval_status", ["pending", "approved", "rejected"]);
 var resolutionStatus = pgEnum("resolution_status", ["pending", "resolved", "rejected"]);
@@ -469,15 +469,35 @@ var muralPosts = pgTable("muralPosts", {
   status: approvalStatus("status").default("pending").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull()
 });
+var news = pgTable("news", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 500 }).notNull(),
+  excerpt: text("excerpt"),
+  source: varchar("source", { length: 100 }).notNull(),
+  sourceUrl: text("sourceUrl").notNull(),
+  publishedAt: timestamp("publishedAt", { withTimezone: true }).notNull(),
+  cycleDate: date("cycleDate").notNull(),
+  category: varchar("category", { length: 100 }),
+  imageUrl: text("imageUrl"),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow().notNull()
+}, (table) => [
+  uniqueIndex("news_source_url_unique").on(table.sourceUrl),
+  index("news_cycle_date_idx").on(table.cycleDate),
+  index("news_published_at_idx").on(table.publishedAt)
+]);
 
 // server/db.ts
 init_env();
 import { desc, and } from "drizzle-orm";
 var _db = null;
+var _client = null;
 async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(postgres(process.env.DATABASE_URL, { max: 10 }));
+      _client = postgres(process.env.DATABASE_URL, { max: 10 });
+      _db = drizzle(_client);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -592,10 +612,28 @@ async function deleteMuralPost(id) {
   return await db.delete(muralPosts).where(eq(muralPosts.id, id));
 }
 
+// server/news.ts
+import { and as and2, desc as desc2, eq as eq2, lt, sql } from "drizzle-orm";
+import { XMLParser, XMLValidator } from "fast-xml-parser";
+var TIME_ZONE = "America/Sao_Paulo";
+function cycleDateInSaoPaulo(date2) {
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(date2);
+  const part = (name) => parts.find((item) => item.type === name)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+async function getCurrentNews(now = /* @__PURE__ */ new Date()) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(news).where(and2(eq2(news.cycleDate, cycleDateInSaoPaulo(now)), eq2(news.active, true))).orderBy(desc2(news.publishedAt)).limit(10);
+}
+
 // server/routers.ts
 var failedAdminLogins = /* @__PURE__ */ new Map();
 var appRouter = router({
   system: systemRouter,
+  news: router({
+    listCurrent: publicProcedure.query(() => getCurrentNews())
+  }),
   auth: router({
     me: publicProcedure.query((opts) => opts.ctx.user),
     passwordLogin: publicProcedure.input(z2.object({ username: z2.string().min(1).max(100), password: z2.string().min(1).max(256) })).mutation(({ ctx, input }) => {
@@ -631,13 +669,13 @@ var appRouter = router({
     list: adminProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
-      const rows = await db.select().from(commerces).orderBy(desc2(commerces.createdAt));
+      const rows = await db.select().from(commerces).orderBy(desc3(commerces.createdAt));
       return rows;
     }),
     listApproved: publicProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
-      const rows = await db.select().from(commerces).where(eq2(commerces.status, "approved")).orderBy(desc2(commerces.createdAt));
+      const rows = await db.select().from(commerces).where(eq3(commerces.status, "approved")).orderBy(desc3(commerces.createdAt));
       return rows;
     }),
     add: publicProcedure.input(
@@ -675,20 +713,20 @@ var appRouter = router({
     updateStatus: adminProcedure.input(z2.object({ id: z2.number(), status: z2.enum(["pending", "approved", "rejected"]) })).mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      await db.update(commerces).set({ status: input.status }).where(eq2(commerces.id, input.id));
+      await db.update(commerces).set({ status: input.status }).where(eq3(commerces.id, input.id));
       return { success: true };
     }),
     update: adminProcedure.input(z2.object({ id: z2.number(), name: z2.string().min(1), category: z2.string().min(1), address: z2.string().min(1), phone: z2.string().min(1), description: z2.string().optional() })).mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       const { id, ...values } = input;
-      await db.update(commerces).set(values).where(eq2(commerces.id, id));
+      await db.update(commerces).set(values).where(eq3(commerces.id, id));
       return { success: true };
     }),
     delete: adminProcedure.input(z2.object({ id: z2.number() })).mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      await db.delete(commerces).where(eq2(commerces.id, input.id));
+      await db.delete(commerces).where(eq3(commerces.id, input.id));
       return { success: true };
     })
   }),
@@ -697,12 +735,12 @@ var appRouter = router({
     listPublic: publicProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
-      return db.select({ id: complaints.id, name: complaints.name, type: complaints.type, address: complaints.address, description: complaints.description, status: complaints.status, createdAt: complaints.createdAt }).from(complaints).orderBy(desc2(complaints.createdAt));
+      return db.select({ id: complaints.id, name: complaints.name, type: complaints.type, address: complaints.address, description: complaints.description, status: complaints.status, createdAt: complaints.createdAt }).from(complaints).orderBy(desc3(complaints.createdAt));
     }),
     list: adminProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
-      return await db.select().from(complaints).orderBy(desc2(complaints.createdAt));
+      return await db.select().from(complaints).orderBy(desc3(complaints.createdAt));
     }),
     add: publicProcedure.input(
       z2.object({
@@ -721,20 +759,20 @@ var appRouter = router({
     updateStatus: adminProcedure.input(z2.object({ id: z2.number(), status: z2.enum(["pending", "resolved", "rejected"]) })).mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      await db.update(complaints).set({ status: input.status }).where(eq2(complaints.id, input.id));
+      await db.update(complaints).set({ status: input.status }).where(eq3(complaints.id, input.id));
       return { success: true };
     }),
     update: adminProcedure.input(z2.object({ id: z2.number(), type: z2.string().min(1), address: z2.string().optional(), description: z2.string().min(1) })).mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       const { id, ...values } = input;
-      await db.update(complaints).set(values).where(eq2(complaints.id, id));
+      await db.update(complaints).set(values).where(eq3(complaints.id, id));
       return { success: true };
     }),
     delete: adminProcedure.input(z2.object({ id: z2.number() })).mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      await db.delete(complaints).where(eq2(complaints.id, input.id));
+      await db.delete(complaints).where(eq3(complaints.id, input.id));
       return { success: true };
     })
   }),
@@ -743,12 +781,12 @@ var appRouter = router({
     listPublic: publicProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
-      return db.select({ id: suggestions.id, type: suggestions.type, message: suggestions.message, status: suggestions.status, createdAt: suggestions.createdAt }).from(suggestions).orderBy(desc2(suggestions.createdAt));
+      return db.select({ id: suggestions.id, type: suggestions.type, message: suggestions.message, status: suggestions.status, createdAt: suggestions.createdAt }).from(suggestions).orderBy(desc3(suggestions.createdAt));
     }),
     list: adminProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
-      return await db.select().from(suggestions).orderBy(desc2(suggestions.createdAt));
+      return await db.select().from(suggestions).orderBy(desc3(suggestions.createdAt));
     }),
     add: publicProcedure.input(
       z2.object({
@@ -767,20 +805,20 @@ var appRouter = router({
     updateStatus: adminProcedure.input(z2.object({ id: z2.number(), status: z2.enum(["pending", "resolved", "rejected"]) })).mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      await db.update(suggestions).set({ status: input.status }).where(eq2(suggestions.id, input.id));
+      await db.update(suggestions).set({ status: input.status }).where(eq3(suggestions.id, input.id));
       return { success: true };
     }),
     update: adminProcedure.input(z2.object({ id: z2.number(), type: z2.string().min(1), message: z2.string().min(1) })).mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       const { id, ...values } = input;
-      await db.update(suggestions).set(values).where(eq2(suggestions.id, id));
+      await db.update(suggestions).set(values).where(eq3(suggestions.id, id));
       return { success: true };
     }),
     delete: adminProcedure.input(z2.object({ id: z2.number() })).mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      await db.delete(suggestions).where(eq2(suggestions.id, input.id));
+      await db.delete(suggestions).where(eq3(suggestions.id, input.id));
       return { success: true };
     })
   }),
@@ -789,7 +827,7 @@ var appRouter = router({
     list: publicProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
-      return await db.select().from(events).orderBy(desc2(events.createdAt));
+      return await db.select().from(events).orderBy(desc3(events.createdAt));
     }),
     add: publicProcedure.input(
       z2.object({
@@ -812,13 +850,13 @@ var appRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       const { id, ...values } = input;
-      await db.update(events).set(values).where(eq2(events.id, id));
+      await db.update(events).set(values).where(eq3(events.id, id));
       return { success: true };
     }),
     delete: adminProcedure.input(z2.object({ id: z2.number() })).mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      await db.delete(events).where(eq2(events.id, input.id));
+      await db.delete(events).where(eq3(events.id, input.id));
       return { success: true };
     })
   }),
@@ -847,13 +885,13 @@ var appRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       const { id, ...values } = input;
-      await db.update(usefulPhones).set(values).where(eq2(usefulPhones.id, id));
+      await db.update(usefulPhones).set(values).where(eq3(usefulPhones.id, id));
       return { success: true };
     }),
     delete: adminProcedure.input(z2.object({ id: z2.number() })).mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      await db.delete(usefulPhones).where(eq2(usefulPhones.id, input.id));
+      await db.delete(usefulPhones).where(eq3(usefulPhones.id, input.id));
       return { success: true };
     })
   }),
@@ -887,7 +925,7 @@ var appRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       const { id, ...values } = input;
-      await db.update(reviews).set(values).where(eq2(reviews.id, id));
+      await db.update(reviews).set(values).where(eq3(reviews.id, id));
       return { success: true };
     })
   }),
@@ -921,7 +959,7 @@ var appRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       const { id, ...values } = input;
-      await db.update(muralPosts).set(values).where(eq2(muralPosts.id, id));
+      await db.update(muralPosts).set(values).where(eq3(muralPosts.id, id));
       return { success: true };
     }),
     delete: adminProcedure.input(z2.object({ id: z2.number() })).mutation(async ({ input }) => {

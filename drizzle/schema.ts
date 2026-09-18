@@ -1,4 +1,4 @@
-import { integer, pgEnum, pgTable, serial, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, date, index, integer, pgEnum, pgTable, serial, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
 
 export const userRole = pgEnum("user_role", ["user", "admin"]);
 export const approvalStatus = pgEnum("approval_status", ["pending", "approved", "rejected"]);
@@ -124,3 +124,23 @@ export const muralPosts = pgTable("muralPosts", {
 
 export type MuralPost = typeof muralPosts.$inferSelect;
 export type InsertMuralPost = typeof muralPosts.$inferInsert;
+
+// Notícias importadas do RSS da Tribuna do Paraná. Conteúdo completo não é armazenado.
+export const news = pgTable("news", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 500 }).notNull(),
+  excerpt: text("excerpt"),
+  source: varchar("source", { length: 100 }).notNull(),
+  sourceUrl: text("sourceUrl").notNull(),
+  publishedAt: timestamp("publishedAt", { withTimezone: true }).notNull(),
+  cycleDate: date("cycleDate").notNull(),
+  category: varchar("category", { length: 100 }),
+  imageUrl: text("imageUrl"),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("news_source_url_unique").on(table.sourceUrl),
+  index("news_cycle_date_idx").on(table.cycleDate),
+  index("news_published_at_idx").on(table.publishedAt),
+]);

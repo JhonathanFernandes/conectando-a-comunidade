@@ -7,6 +7,7 @@ import { TRPCError } from "@trpc/server";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, publicProcedure, router } from "./_core/trpc";
 import { getDb } from "./db";
+import { getCurrentNews } from "./news";
 import {
   commerces,
   complaints,
@@ -32,6 +33,9 @@ const failedAdminLogins = new Map<string, { count: number; resetAt: number }>();
 
 export const appRouter = router({
   system: systemRouter,
+  news: router({
+    listCurrent: publicProcedure.query(() => getCurrentNews()),
+  }),
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     passwordLogin: publicProcedure

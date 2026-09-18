@@ -8,6 +8,13 @@
       "when": 1789650848934,
       "tag": "0000_wet_zombie",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789745241344,
+      "tag": "0001_little_mandrill",
+      "breakpoints": true
     }
   ]
 }

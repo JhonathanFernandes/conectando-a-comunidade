@@ -8,29 +8,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WaveDivider from "@/components/WaveDivider";
+import { trpc } from "@/lib/trpc";
 
-const newsCategories = [
-  "Todas", "Obras", "Prefeitura",
-];
-
-interface NewsItem {
-  id: number;
-  title: string;
-  category: string;
-  date: string;
-  excerpt: string;
-  url: string;
-}
-
-const news: NewsItem[] = [
-  { id: 1, title: "Recuperação de galeria pluvial na Rua Eduardo Sprada", category: "Obras", date: "23/07/2026", excerpt: "A Prefeitura informou uma intervenção na Rua Eduardo Sprada, no Campo Comprido, para recuperação de galeria pluvial.", url: "https://www.curitiba.pr.gov.br/noticias/recuperacao-de-galeria-pluvial-altera-transito-na-rua-eduardo-sprada-no-campo-comprido/84226" },
-  { id: 2, title: "Obra na Major Heitor Guimarães afeta acesso à região", category: "Obras", date: "2026", excerpt: "A Prefeitura publicou informações sobre as obras no corredor que liga a BR-277 aos bairros da região do Campo Comprido.", url: "https://www.curitiba.pr.gov.br/noticias/major-heitor-guimaraes-passa-por-obra-complexa-para-melhoria-do-transporte-publico-e-da-regiao/83234" },
-  { id: 3, title: "Licitação para novos terminais Campo Comprido e Centenário", category: "Prefeitura", date: "2026", excerpt: "Foi aberto processo de licitação para construir os novos terminais do projeto BRT Leste/Oeste.", url: "https://www.curitiba.pr.gov.br/noticias/licitacao-para-construcao-dos-novos-terminais-campo-comprido-e-centenario-esta-aberta/82574" },
-  { id: 4, title: "Área de macrodrenagem vira parque no Campo Comprido", category: "Obras", date: "31/03/2026", excerpt: "Obra às margens do Rio Mossunguê combina prevenção de alagamentos e novo espaço de lazer.", url: "https://www.curitiba.pr.gov.br/noticias/obra-de-macrodrenagem-transforma-area-do-campo-comprido-em-novo-parque-de-curitiba/82444" },
-  { id: 5, title: "Projeto habitacional para famílias da Vila Santos Andrade", category: "Prefeitura", date: "20/02/2026", excerpt: "A Prefeitura apresentou avanço no projeto de regularização fundiária e reassentamento no Campo Comprido.", url: "https://www.curitiba.pr.gov.br/noticias/curitiba-avanca-em-solucao-habitacional-e-ambiental-para-300-familias-no-campo-comprido/81788" },
-];
+const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short",
+});
 
 export default function Noticias() {
+  const { data: news = [], isLoading, isError } = trpc.news.listCurrent.useQuery(undefined, { refetchInterval: 15 * 60 * 1000 });
+  const newsCategories = ["Todas", ...Array.from(new Set(news.map((item) => item.category).filter((category): category is string => Boolean(category))))];
   const [activeCategory, setActiveCategory] = useState("Todas");
   const [filterOpen, setFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
@@ -120,19 +106,24 @@ export default function Noticias() {
           </div>
 
           {/* Featured news */}
+          {!isLoading && filtered.length === 0 && (
+            <div className="mb-8 p-6 rounded-xl bg-card border border-border text-muted-foreground">
+              {isError ? "Notícias indisponíveis no momento. Tente novamente mais tarde." : "Ainda não há notícias para o ciclo de hoje."}
+            </div>
+          )}
           {filtered.length > 0 && (
             <div className="mb-8 p-6 rounded-xl bg-card border border-border shadow-sm">
-              <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary mb-3">
-                {filtered[0].category}
-              </span>
+              {filtered[0].imageUrl && <img src={filtered[0].imageUrl} alt="" className="w-full max-h-64 object-cover rounded-lg mb-4" loading="lazy" />}
+              {filtered[0].category && <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary mb-3">{filtered[0].category}</span>}
               <h2 className="font-serif text-2xl font-bold text-foreground mb-2">
                 {filtered[0].title}
               </h2>
               <p className="text-muted-foreground mb-4">{filtered[0].excerpt}</p>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="w-4 h-4" />
-                <span>{filtered[0].date}</span>
-                <a href={filtered[0].url} target="_blank" rel="noopener noreferrer" className="ml-auto inline-flex items-center gap-1 text-primary hover:underline">Ler na fonte <ArrowRight className="w-4 h-4" /></a>
+                <span>{dateFormatter.format(filtered[0].publishedAt)}</span>
+                <span className="ml-2">Fonte: Tribuna do Paraná</span>
+                <a href={filtered[0].sourceUrl} target="_blank" rel="noopener noreferrer" className="ml-auto inline-flex items-center gap-1 text-primary hover:underline">Ler matéria <ArrowRight className="w-4 h-4" /></a>
               </div>
             </div>
           )}
@@ -144,17 +135,17 @@ export default function Noticias() {
                 key={item.id}
                 className="p-5 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-md transition-all group"
               >
-                <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-accent/10 text-accent mb-3">
-                  {item.category}
-                </span>
+                {item.imageUrl && <img src={item.imageUrl} alt="" className="w-full h-40 object-cover rounded-lg mb-3" loading="lazy" />}
+                {item.category && <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-accent/10 text-accent mb-3">{item.category}</span>}
                 <h3 className="font-serif text-lg font-semibold text-foreground group-hover:text-primary transition-colors mb-2">
                   {item.title}
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4 line-clamp-3">{item.excerpt}</p>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <Calendar className="w-3.5 h-3.5" />
-                  <span>{item.date}</span>
-                  <a href={item.url} target="_blank" rel="noopener noreferrer" className="ml-auto text-primary hover:underline">Ler na fonte</a>
+                  <span>{dateFormatter.format(item.publishedAt)}</span>
+                  <span>Fonte: Tribuna do Paraná</span>
+                  <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" className="ml-auto text-primary hover:underline">Ler matéria</a>
                 </div>
               </article>
             ))}

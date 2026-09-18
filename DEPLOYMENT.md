@@ -14,3 +14,19 @@ Fotos enviadas pelo formulário dependem das variáveis de armazenamento usadas 
 ## Endereço antigo do GitHub Pages
 
 Depois que o Vercel estiver funcionando, definir a variável de repositório `PUBLIC_APP_URL` com a origem HTTPS do novo site, sem caminho final (por exemplo, `https://meu-site.vercel.app`). O workflow do GitHub Pages testa a API antes de publicar um redirecionamento do endereço antigo para o Vercel.
+
+## Notícias automáticas da Tribuna do Paraná
+
+O feed é `https://www.tribunapr.com.br/feed/`, confirmado pelo link “Feed RSS” do site da própria Tribuna. A importação grava apenas título, resumo curto, metadados, imagem e a URL individual da matéria. A API `news.listCurrent` mostra somente notícias do ciclo de hoje no horário de São Paulo. A migration `drizzle/pg/0001_little_mandrill.sql` cria apenas a tabela `news` e seus índices; ela deve ser aplicada antes da primeira execução do cron.
+
+Para ativar a atualização programada, criar **um serviço Cron Job adicional no Render** após revisar o plano e o custo da conta:
+
+- Repositório e branch: os mesmos da aplicação, branch `main`.
+- Runtime: Node.js; build command: `pnpm install --frozen-lockfile --prod=false`.
+- Schedule: `0 11,17 * * *` (Render usa UTC; corresponde a 08h e 14h em `America/Sao_Paulo` enquanto o fuso estiver em UTC−3).
+- Command: `pnpm exec tsx scripts/sync-news.ts auto`.
+- Variável de ambiente: `DATABASE_URL`, usando a conexão PostgreSQL acessível pelo Cron Job. Nenhuma nova chave ou senha precisa ser criada no código.
+
+O comando identifica a fase pelo horário em São Paulo: às 08h inicia o conjunto diário; às 14h completa ou substitui matérias conforme recência e diversidade das seções presentes nas URLs do RSS. Não inventa categorias ausentes do feed. Falhas de RSS encerram apenas a execução do cron e preservam os registros válidos; a API e as demais páginas continuam independentes. O banco retém até 60 dias de registros dessa tabela e a API retorna no máximo 10 notícias ativas do dia atual. Se houver mudança legal no fuso de São Paulo, revisar a expressão UTC do Render.
+
+Para testar manualmente após aplicar a migration, usar a opção `morning` ou `afternoon` no lugar de `auto`. Isso grava dados no mesmo PostgreSQL configurado para o job, por isso execute o teste no ambiente escolhido conscientemente. O Cron Job do Render é um serviço adicional e não está incluído no serviço web gratuito descrito em `render.yaml`.
