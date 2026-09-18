@@ -3,7 +3,7 @@ import { photoUrl } from "@/data/photos";
  * Design: Terra Viva — Notícias do Bairro
  */
 import { useState, useRef, useEffect } from "react";
-import { Newspaper, Calendar, ArrowRight, Filter, ChevronDown, Tag } from "lucide-react";
+import { Calendar, ArrowRight, Filter, ChevronDown, Tag, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -14,12 +14,26 @@ const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
   timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short",
 });
 
+const touristPhotos = [
+  { src: photoUrl("jardim-botanico-curitiba.jpg"), alt: "Jardim Botânico de Curitiba", name: "Jardim Botânico", credit: "Adelano Lázaro", source: "https://commons.wikimedia.org/wiki/File:Curitiba_jardim_botanico.jpg" },
+  { src: photoUrl("opera-de-arame-curitiba.jpg"), alt: "Ópera de Arame em Curitiba", name: "Ópera de Arame", credit: "Marcus Bezerra", source: "https://commons.wikimedia.org/wiki/File:Curitiba_-_%C3%93pera_de_Arame_-_Ala.jpg" },
+  { src: photoUrl("museu-oscar-niemeyer-curitiba.jpg"), alt: "Museu Oscar Niemeyer em Curitiba", name: "Museu Oscar Niemeyer", credit: "Morio · CC BY-SA 3.0", source: "https://commons.wikimedia.org/wiki/File:Museu_Oscar_Niemeyer_12_Curitiba_Brasil.jpg" },
+  { src: photoUrl("parque-tangua-curitiba.jpg"), alt: "Parque Tanguá em Curitiba", name: "Parque Tanguá", credit: "Leonardo Stabile", source: "https://commons.wikimedia.org/wiki/File:Parque_Tangu%C3%A1,_Curitiba.jpg" },
+  { src: photoUrl("parque-barigui.jpg"), alt: "Parque Barigui em Curitiba", name: "Parque Barigui", credit: "Angelo Orselli · CC BY-SA 3.0", source: "https://commons.wikimedia.org/wiki/File:Parque_Barigui_Curitiba.jpg" },
+];
+
 export default function Noticias() {
   const { data: news = [], isLoading, isError } = trpc.news.listCurrent.useQuery(undefined, { refetchInterval: 15 * 60 * 1000 });
   const newsCategories = ["Todas", ...Array.from(new Set(news.map((item) => item.category).filter((category): category is string => Boolean(category))))];
   const [activeCategory, setActiveCategory] = useState("Todas");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [currentPhoto, setCurrentPhoto] = useState(0);
   const filterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setCurrentPhoto((index) => (index + 1) % touristPhotos.length), 5000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -41,24 +55,30 @@ export default function Noticias() {
 
       {/* Hero */}
       <section className="pt-28 lg:pt-36 pb-12 min-h-[320px] lg:min-h-[360px] relative overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src={photoUrl("terminal-campo-comprido.jpg")}
-            alt="Terminal Campo Comprido"
-            className="w-full h-full object-cover object-center"
-          />
-          <div className="absolute inset-0 bg-black/50" />
-        </div>
+        {touristPhotos.map((photo, index) => (
+          <div key={photo.src} className={`absolute inset-0 transition-opacity duration-700 ${index === currentPhoto ? "opacity-100" : "opacity-0"}`} aria-hidden={index !== currentPhoto}>
+            <img src={photo.src} alt={photo.alt} className="w-full h-full object-cover object-center" loading={index === 0 ? "eager" : "lazy"} />
+          </div>
+        ))}
+        <div className="absolute inset-0 bg-black/50" />
         <div className="container relative z-10">
           <p className="text-white/70 font-medium text-sm uppercase tracking-widest mb-2">
             Notícias do Bairro
           </p>
           <h1 className="font-serif text-3xl lg:text-5xl font-bold text-white mb-4">
-            Fique por dentro do Campo Comprido
+            Fique por dentro das notícias do seu bairro
           </h1>
           <p className="text-white/80 text-lg max-w-2xl">
             Acompanhe as últimas notícias sobre segurança, obras, eventos e mais.
           </p>
+        </div>
+        <div className="absolute bottom-3 left-4 z-20 text-xs text-white/80">
+          {touristPhotos[currentPhoto].name} · Foto: <a href={touristPhotos[currentPhoto].source} target="_blank" rel="noopener noreferrer" className="underline hover:text-white">{touristPhotos[currentPhoto].credit}</a>
+        </div>
+        <div className="absolute bottom-3 right-4 z-20 flex items-center gap-2">
+          <button type="button" onClick={() => setCurrentPhoto((index) => (index - 1 + touristPhotos.length) % touristPhotos.length)} className="rounded-full bg-black/40 p-2 text-white hover:bg-black/60" aria-label="Foto anterior"><ChevronLeft className="h-4 w-4" /></button>
+          <span className="text-xs text-white" aria-live="polite">{currentPhoto + 1}/{touristPhotos.length}</span>
+          <button type="button" onClick={() => setCurrentPhoto((index) => (index + 1) % touristPhotos.length)} className="rounded-full bg-black/40 p-2 text-white hover:bg-black/60" aria-label="Próxima foto"><ChevronRight className="h-4 w-4" /></button>
         </div>
       </section>
 
