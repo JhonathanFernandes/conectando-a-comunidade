@@ -4,13 +4,12 @@ import { photoUrl as localPhotoUrl } from "@/data/photos";
  * Filtros agrupados em dropdown, mapa interativo automático,
  * cadastro de serviços pelo usuário, dados reais do bairro
  */
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Search, MapPin, Phone, Clock, Star, ChevronDown, Filter, Navigation, Plus, MapPinned, Upload, Image as ImageIcon, Loader2, X, MessageSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WaveDivider from "@/components/WaveDivider";
-import { MapView } from "@/components/Map";
 import { services as seedServices } from "@/data/services-data";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -226,12 +225,9 @@ export default function Servicos() {
   const [filterOpen, setFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
   const [showMap, setShowMap] = useState(true);
-  const [mapReady, setMapReady] = useState(false);
   const [selectedService, setSelectedService] = useState<Service & { lat: number; lng: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const mapRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
-  const userMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const addressInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -375,66 +371,20 @@ export default function Servicos() {
     setFilterOpen(false);
   };
 
-  // Update markers on map when category/search changes
-  const updateMarkers = useCallback(() => {
-    if (!mapRef.current) return;
-
-    // Clear existing markers
-    markersRef.current.forEach((marker) => {
-      marker.map = null;
-    });
-    markersRef.current = [];
-
-    // Filter map services by current selection
-    const mapFiltered = mapServices.filter((s) => {
-      const matchCategory = activeCategory === "Todos" || s.category === activeCategory;
-      const matchSearch =
-        !searchTerm ||
-        s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.address.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchCategory && matchSearch;
-    });
-
-    // Add markers for filtered services
-    mapFiltered.forEach((service) => {
-      const marker = new google.maps.marker.AdvancedMarkerElement({
-        map: mapRef.current,
-        position: { lat: service.lat, lng: service.lng },
-        title: service.name,
-      });
-
-      marker.addListener("click", () => {
-        setSelectedService(service);
-        mapRef.current?.panTo({ lat: service.lat, lng: service.lng });
-      });
-
-      markersRef.current.push(marker);
-    });
-  }, [activeCategory, searchTerm, mapServices]);
-
-  const handleMapReady = (map: google.maps.Map) => {
-    mapRef.current = map;
-    setMapReady(true);
-    updateMarkers();
-  };
-
-  // Update markers when filters change
-  useEffect(() => {
-    if (mapReady) {
-      updateMarkers();
-    }
-  }, [mapReady, activeCategory, searchTerm, updateMarkers]);
-
   const flyToService = (service: Service) => {
     const coords = mapServices.find((item) => item.id === service.id) || CAMPO_COMPRIDO_CENTER;
     setSelectedService({ ...service, ...coords });
-    if (mapRef.current) {
-      mapRef.current.panTo(coords);
-      mapRef.current.setZoom(16);
-    }
+    setUserLocation(null);
     setShowMap(true);
     window.scrollTo({ top: 300, behavior: "smooth" });
   };
+
+  const mapQuery = selectedService
+    ? `${selectedService.name}, ${selectedService.address}`
+    : userLocation
+      ? `${userLocation.lat},${userLocation.lng}`
+      : `${CAMPO_COMPRIDO_CENTER.lat},${CAMPO_COMPRIDO_CENTER.lng}`;
+  const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`;
 
   const getUserLocation = () => {
     if (!navigator.geolocation) {
@@ -448,17 +398,8 @@ export default function Servicos() {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         };
-        if (userMarkerRef.current) {
-          userMarkerRef.current.position = location;
-        } else if (mapRef.current) {
-          userMarkerRef.current = new google.maps.marker.AdvancedMarkerElement({
-            map: mapRef.current,
-            position: location,
-            title: "Você está aqui",
-          });
-        }
-        mapRef.current?.panTo(location);
-        mapRef.current?.setZoom(14);
+        setSelectedService(null);
+        setUserLocation(location);
         toast.success("Localização encontrada!");
       },
       () => {
@@ -658,14 +599,16 @@ export default function Servicos() {
             {activeCategory !== "Todos" && <span> na categoria <strong>{activeCategory}</strong></span>}
           </p>
 
-          {/* Interactive Map — automatically visible */}
+          {/* Same embeddable map used on the commerce page. */}
           {showMap && (
             <div className="relative rounded-xl overflow-hidden border border-border shadow-lg mb-8" style={{ height: "400px", minHeight: "350px" }}>
-              <MapView
-                initialCenter={CAMPO_COMPRIDO_CENTER}
-                initialZoom={14}
-                onMapReady={handleMapReady}
-                className="w-full h-full"
+              <iframe
+                key={mapUrl}
+                title={selectedService ? `Mapa de ${selectedService.name}` : "Mapa de serviços do Campo Comprido"}
+                src={mapUrl}
+                className="w-full h-full border-0"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
               />
               {/* Geolocation button */}
               <button
@@ -677,7 +620,7 @@ export default function Servicos() {
               </button>
               {/* Info badge */}
               <div className="absolute top-4 left-4 bg-card/90 dark:bg-[oklch(0.22_0.02_160)]/90 px-3 py-1.5 rounded-full text-xs font-medium text-muted-foreground dark:text-[oklch(0.70_0.02_80)] shadow-sm">
-                {filtered.length} serviços no mapa
+                {filtered.length} serviços encontrados
               </div>
 
               {/* Selected service popup */}
@@ -706,7 +649,7 @@ export default function Servicos() {
                   </div>
                   <div className="p-4 pt-0 flex gap-2">
                     <button
-                      onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${selectedService.lat},${selectedService.lng}`, "_blank")}
+                      onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${selectedService.name}, ${selectedService.address}`)}`, "_blank", "noopener,noreferrer")}
                       className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[oklch(0.72_0.12_40)] text-white px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-[oklch(0.65_0.12_40)] transition-colors"
                     >
                       <Navigation className="w-4 h-4" /> Rotas
@@ -819,7 +762,7 @@ export default function Servicos() {
                                         Ver no mapa
                                       </button>
                                       <button
-                                        onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${serviceCoords[service.name]?.lat ?? ''},${serviceCoords[service.name]?.lng ?? ''}`, "_blank")}
+                                        onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${service.name}, ${service.address}`)}`, "_blank", "noopener,noreferrer")}
                                         className="text-xs px-2.5 py-1 rounded-lg border border-border text-foreground hover:bg-muted transition-colors"
                                       >
                                         Traçar rota
