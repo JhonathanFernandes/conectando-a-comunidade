@@ -1,0 +1,41 @@
+name: Atualizar notícias
+
+on:
+  schedule:
+    - cron: "0 11,17 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: news-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABASE_URL: ${{ secrets.NEWS_DATABASE_URL }}
+    steps:
+      - name: Verificar configuração do banco
+        run: test -n "$DATABASE_URL"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile --prod=false
+
+      - name: Atualizar ciclo de notícias
+        run: pnpm exec tsx scripts/sync-news.ts auto
