@@ -112,6 +112,13 @@ export function phaseInSaoPaulo(date: Date): "morning" | "afternoon" | null {
   return hour === 8 ? "morning" : hour === 14 ? "afternoon" : null;
 }
 
+export function phaseForRunInSaoPaulo(date: Date): "morning" | "afternoon" {
+  const scheduledPhase = phaseInSaoPaulo(date);
+  if (scheduledPhase) return scheduledPhase;
+  const hour = Number(new Intl.DateTimeFormat("en-US", { timeZone: TIME_ZONE, hour: "2-digit", hourCycle: "h23" }).format(date));
+  return hour < 14 ? "morning" : "afternoon";
+}
+
 function sectionKey(article: NewsCandidate): string {
   const parts = new URL(article.sourceUrl).pathname.split("/").filter(Boolean);
   return parts[0] === "noticias" ? `${parts[0]}/${parts[1]}` : parts[0];

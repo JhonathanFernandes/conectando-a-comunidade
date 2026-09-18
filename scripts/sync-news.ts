@@ -1,4 +1,4 @@
-import { phaseInSaoPaulo, syncNews } from "../server/news";
+import { phaseForRunInSaoPaulo, syncNews } from "../server/news";
 import { closeDb } from "../server/db";
 
 const requestedPhase = process.argv[2] ?? "auto";
@@ -9,8 +9,7 @@ if (requestedPhase !== "auto" && requestedPhase !== "morning" && requestedPhase 
 
 async function main() {
   try {
-    const phase = requestedPhase === "auto" ? phaseInSaoPaulo(new Date()) : requestedPhase;
-    if (!phase) throw new Error("Cron executado fora das 08h/14h em America/Sao_Paulo");
+    const phase = requestedPhase === "auto" ? phaseForRunInSaoPaulo(new Date()) : requestedPhase;
     const result = await syncNews(phase as "morning" | "afternoon");
     console.log(`[news] ciclo=${result.cycleDate} fase=${result.phase} feed=${result.fetched} exibidas=${result.selected}`);
   } catch (error) {

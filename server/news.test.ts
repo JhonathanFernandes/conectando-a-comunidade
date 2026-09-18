@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildCycle, cycleDateInSaoPaulo, fetchTribunaFeed, parseTribunaFeed, phaseInSaoPaulo, selectDiverseNews, validArticleUrl, type NewsCandidate } from "./news";
+import { buildCycle, cycleDateInSaoPaulo, fetchTribunaFeed, parseTribunaFeed, phaseForRunInSaoPaulo, phaseInSaoPaulo, selectDiverseNews, validArticleUrl, type NewsCandidate } from "./news";
 
 const articleUrl = (section: string, slug: string) => `https://www.tribunapr.com.br/${section}/${slug}/`;
 const article = (section: string, slug: string, hour = 12): NewsCandidate => ({
@@ -63,6 +63,8 @@ describe("seleção e ciclo diário", () => {
     expect(phaseInSaoPaulo(morning)).toBe("morning");
     expect(phaseInSaoPaulo(afternoon)).toBe("afternoon");
     expect(phaseInSaoPaulo(new Date("2026-09-18T12:00:00-03:00"))).toBeNull();
+    expect(phaseForRunInSaoPaulo(new Date("2026-09-18T12:00:00-03:00"))).toBe("morning");
+    expect(phaseForRunInSaoPaulo(new Date("2026-09-18T15:00:00-03:00"))).toBe("afternoon");
     expect(buildCycle([today, yesterday], [], morning, "morning").map((news) => news.sourceUrl)).toEqual([today.sourceUrl]);
     const newArticle = article("noticias/curitiba-regiao", "tarde", 13);
     expect(buildCycle([today, newArticle], [today], afternoon, "afternoon")).toHaveLength(2);
