@@ -16,6 +16,18 @@ services:
         sync: false
       - key: ADMIN_SESSION_SECRET
         generateValue: true
+  - type: cron
+    name: conectando-a-comunidade-noticias
+    runtime: node
+    plan: 0.5c-512mb
+    schedule: "0 11,17 * * *"
+    buildCommand: pnpm install --frozen-lockfile --prod=false
+    startCommand: pnpm exec tsx scripts/sync-news.ts auto
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: conectando-a-comunidade-db
+          property: connectionString
 databases:
   - name: conectando-a-comunidade-db
     plan: free
