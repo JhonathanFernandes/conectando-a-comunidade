@@ -3,7 +3,7 @@ import { photoUrl } from "@/data/photos";
  * Design: Terra Viva — Notícias do Bairro
  */
 import { useState, useRef, useEffect } from "react";
-import { Calendar, ArrowRight, Filter, ChevronDown, Tag, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, Filter, ChevronDown, Tag, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -132,7 +132,7 @@ export default function Noticias() {
             </div>
           )}
           {filtered.length > 0 && (
-            <div className="mb-8 p-6 rounded-xl bg-card border border-border shadow-sm">
+            <a href={filtered[0].sourceUrl} target="_blank" rel="noopener noreferrer" className="block mb-8 p-6 rounded-xl bg-card border border-border shadow-sm hover:border-primary/30 hover:shadow-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
               {filtered[0].imageUrl && <img src={filtered[0].imageUrl} alt="" className="w-full max-h-64 object-cover rounded-lg mb-4" loading="lazy" />}
               {filtered[0].category && <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary mb-3">{filtered[0].category}</span>}
               <h2 className="font-serif text-2xl font-bold text-foreground mb-2">
@@ -143,17 +143,19 @@ export default function Noticias() {
                 <Calendar className="w-4 h-4" />
                 <span>{dateFormatter.format(filtered[0].publishedAt)}</span>
                 <span className="ml-2">Fonte: Tribuna do Paraná</span>
-                <a href={filtered[0].sourceUrl} target="_blank" rel="noopener noreferrer" className="ml-auto inline-flex items-center gap-1 text-primary hover:underline">Ler matéria <ArrowRight className="w-4 h-4" /></a>
               </div>
-            </div>
+            </a>
           )}
 
           {/* News grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filtered.slice(1).map((item) => (
-              <article
+              <a
                 key={item.id}
-                className="p-5 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-md transition-all group"
+                href={item.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block p-5 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-md transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 {item.imageUrl && <img src={item.imageUrl} alt="" className="w-full h-40 object-cover rounded-lg mb-3" loading="lazy" />}
                 {item.category && <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-accent/10 text-accent mb-3">{item.category}</span>}
@@ -165,9 +167,8 @@ export default function Noticias() {
                   <Calendar className="w-3.5 h-3.5" />
                   <span>{dateFormatter.format(item.publishedAt)}</span>
                   <span>Fonte: Tribuna do Paraná</span>
-                  <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" className="ml-auto text-primary hover:underline">Ler matéria</a>
                 </div>
-              </article>
+              </a>
             ))}
           </div>
         </div>
