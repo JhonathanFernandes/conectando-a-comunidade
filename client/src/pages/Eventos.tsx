@@ -118,7 +118,10 @@ export default function Eventos() {
           <img
             src={photoUrl("event-novo.png")}
             alt="Árvores coloridas na canaleta da Rua Deputado Heitor Alencar Furtado"
-            className="w-full h-full object-cover object-center"
+            className="page-hero-image"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
           />
           <div className="absolute inset-0 bg-black/50" />
         </div>

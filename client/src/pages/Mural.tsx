@@ -75,7 +75,10 @@ export default function Mural() {
           <img
             src={photoUrl("Comunidade-novo.png")}
             alt="Mural da Comunidade do Campo Comprido"
-            className="w-full h-full object-cover object-top"
+            className="page-hero-image"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
           />
           <div className="absolute inset-0 bg-black/50" />
         </div>

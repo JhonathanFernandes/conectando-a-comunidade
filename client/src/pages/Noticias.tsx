@@ -55,11 +55,9 @@ export default function Noticias() {
 
       {/* Hero */}
       <section className="pt-28 lg:pt-36 pb-12 min-h-[320px] lg:min-h-[360px] relative overflow-hidden">
-        {touristPhotos.map((photo, index) => (
-          <div key={photo.src} className={`absolute inset-0 transition-opacity duration-700 ${index === currentPhoto ? "opacity-100" : "opacity-0"}`} aria-hidden={index !== currentPhoto}>
-            <img src={photo.src} alt={photo.alt} className="w-full h-full object-cover object-center" loading={index === 0 ? "eager" : "lazy"} />
-          </div>
-        ))}
+        <div key={touristPhotos[currentPhoto].src} className="absolute inset-0 animate-in fade-in duration-700">
+          <img src={touristPhotos[currentPhoto].src} alt={touristPhotos[currentPhoto].alt} className="page-hero-image" loading="eager" decoding="async" fetchPriority="high" />
+        </div>
         <div className="absolute inset-0 bg-black/50" />
         <div className="container relative z-10">
           <p className="text-white/70 font-medium text-sm uppercase tracking-widest mb-2">

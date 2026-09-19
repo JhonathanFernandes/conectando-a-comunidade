@@ -192,17 +192,17 @@ export default function Home() {
 
       {/* ===== HERO CAROUSEL ===== */}
       <section className="relative h-[85vh] min-h-[500px] overflow-hidden pt-36 lg:pt-44" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-        {carouselImages.map((img, i) => (
-          <div
-            key={i}
-            className={`absolute inset-0 transition-opacity duration-700 ${
-              i === currentSlide ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            <img src={img.src} alt={img.alt} className="w-full h-full object-cover object-center" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/40 to-black/35" />
-          </div>
-        ))}
+        <div key={currentSlide} className="absolute inset-0 animate-in fade-in duration-700">
+          <img
+            src={carouselImages[currentSlide].src}
+            alt={carouselImages[currentSlide].alt}
+            className="page-hero-image"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/40 to-black/35" />
+        </div>
 
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center">
           <div className="container">

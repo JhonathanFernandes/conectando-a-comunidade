@@ -53,7 +53,7 @@ export default function Telefones() {
           <img
             src={photoUrl("telefine-novo.png")}
             alt="Terminal Campo Comprido"
-            className="w-full h-full object-cover object-center" loading="eager"
+            className="page-hero-image" loading="eager" decoding="async" fetchPriority="high"
           />
           <div className="absolute inset-0 bg-black/50" />
         </div>

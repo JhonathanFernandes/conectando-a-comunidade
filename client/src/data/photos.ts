@@ -1,4 +1,10 @@
-export const photoUrl = (file: string) => `${import.meta.env.BASE_URL}photos/${file}`;
+// Todas as fotos locais possuem uma versão WebP otimizada. Mantemos os nomes
+// originais nas chamadas para deixar o conteúdo legível e entregamos ao
+// navegador o arquivo leve automaticamente.
+export const photoUrl = (file: string) => {
+  const optimizedFile = file.replace(/\.(?:png|jpe?g)$/i, ".webp");
+  return `${import.meta.env.BASE_URL}photos/${encodeURIComponent(optimizedFile)}`;
+};
 
 export const neighborhoodPhotos = [
   {

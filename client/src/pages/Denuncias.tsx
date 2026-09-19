@@ -79,7 +79,10 @@ export default function Denuncias() {
           <img
             src={photoUrl("denuncia-novo.png")}
             alt="Canal de Denúncias do Campo Comprido"
-            className="w-full h-full object-cover object-center"
+            className="page-hero-image"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-transparent" />
         </div>

@@ -17,7 +17,10 @@ export default function Sobre() {
         <img
           src={photoUrl("ecoville-nova.png")}
           alt="Edifícios residenciais no Campo Comprido"
-          className="absolute inset-0 w-full h-full object-cover object-center"
+          className="absolute inset-0 page-hero-image"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
         />
         <div className="absolute inset-0 bg-black/60" />
         <div className="container relative z-10 text-center">

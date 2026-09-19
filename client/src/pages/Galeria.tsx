@@ -49,9 +49,12 @@ export default function Galeria() {
       <section className="pt-28 lg:pt-36 pb-12 min-h-[320px] lg:min-h-[360px] relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src={photoUrl("rua-antonio-macioski.jpg")}
+            src={photoUrl("rua antonio-nova.png")}
             alt="Rua Antônio Macioski no Campo Comprido"
-            className="w-full h-full object-cover object-center"
+            className="page-hero-image"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
           />
           <div className="absolute inset-0 bg-black/55" />
         </div>

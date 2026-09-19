@@ -485,7 +485,7 @@ export default function Servicos() {
           <img
             src={localPhotoUrl("servicos-novo.png")}
             alt="Rua Antônio Macioski no Campo Comprido"
-            className="w-full h-full object-cover object-center" loading="eager"
+            className="page-hero-image" loading="eager" decoding="async" fetchPriority="high"
           />
           <div className="absolute inset-0 bg-black/50" />
         </div>

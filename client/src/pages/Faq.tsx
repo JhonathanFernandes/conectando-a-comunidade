@@ -56,7 +56,10 @@ export default function Faq() {
           <img
             src={photoUrl("rua-pedro-zanlorenzi.jpg")}
             alt="Araucária na Rua Pedro Artur Zanlorenzi no Campo Comprido"
-            className="w-full h-full object-cover object-center"
+            className="page-hero-image"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
           />
           <div className="absolute inset-0 bg-black/55" />
         </div>
