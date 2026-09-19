@@ -9,7 +9,7 @@ const app = createApiApp();
 export default function handler(req: Request, res: Response) {
   const url = new URL(req.url, "http://localhost");
   const route = url.searchParams.get("route");
-  if (!route || !/^(trpc\/|oauth\/callback$|manus-storage\/)/.test(route)) {
+  if (!route || !/^(trpc\/|oauth\/callback$|manus-storage\/|cron\/events$)/.test(route)) {
     res.status(404).end();
     return;
   }

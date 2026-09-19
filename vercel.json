@@ -3,6 +3,9 @@
   "framework": "vite",
   "buildCommand": "node scripts/migrate-postgres.mjs && pnpm exec tsx scripts/sync-events.ts && pnpm exec vite build && pnpm exec esbuild scripts/vercel-api.ts --bundle --platform=node --format=esm --packages=external --outfile=api/index.js",
   "outputDirectory": "dist/public",
+  "crons": [
+    { "path": "/api/cron/events", "schedule": "0 11 * * *" }
+  ],
   "rewrites": [
     { "source": "/api/:route*", "destination": "/api/index?route=:route*" },
     { "source": "/(.*)", "destination": "/index.html" }
