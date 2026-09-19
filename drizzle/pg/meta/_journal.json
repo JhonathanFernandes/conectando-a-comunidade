@@ -29,6 +29,13 @@
       "when": 1790006400000,
       "tag": "0003_spread_community_dates",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790007000000,
+      "tag": "0004_correct_community_timezone",
+      "breakpoints": true
     }
   ]
 }
