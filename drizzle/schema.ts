@@ -82,8 +82,15 @@ export const events = pgTable("events", {
   organizer: varchar("organizer", { length: 255 }),
   description: text("description"),
   attendees: varchar("attendees", { length: 100 }),
+  endDate: varchar("endDate", { length: 100 }),
+  source: varchar("source", { length: 100 }).default("community").notNull(),
+  sourceUrl: text("sourceUrl"),
+  externalId: varchar("externalId", { length: 100 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => [
+  uniqueIndex("events_external_id_unique").on(table.externalId),
+  index("events_date_idx").on(table.date),
+]);
 
 export const usefulPhones = pgTable("usefulPhones", {
   id: serial("id").primaryKey(),

@@ -73,9 +73,9 @@ export default function Mural() {
       <section className="pt-28 lg:pt-36 pb-12 min-h-[320px] lg:min-h-[360px] relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src={photoUrl("rua-antonio-macioski.jpg")}
-            alt="Rua Antônio Macioski no Campo Comprido"
-            className="w-full h-full object-cover object-center"
+            src={photoUrl("Comunidade-novo.png")}
+            alt="Mural da Comunidade do Campo Comprido"
+            className="w-full h-full object-cover object-top"
           />
           <div className="absolute inset-0 bg-black/50" />
         </div>

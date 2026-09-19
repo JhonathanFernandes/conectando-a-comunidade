@@ -4,7 +4,7 @@ import { photoUrl } from "@/data/photos";
  * Filtros agrupados em dropdown, terracota como cor de ação
  */
 import { useState, useRef, useEffect } from "react";
-import { Calendar, MapPin, Clock, Users, ArrowRight, Heart, Tag, Filter, ChevronDown, Plus, X } from "lucide-react";
+import { Calendar, MapPin, Clock, Users, ExternalLink, Tag, Filter, ChevronDown, Plus, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import Header from "@/components/Header";
@@ -44,13 +44,15 @@ interface Event {
   organizer: string;
   description: string;
   attendees?: string;
+  source?: string;
+  sourceUrl?: string;
 }
 
 const categoryOptions = ["Feiras", "Festas", "Culturais", "Esportivos", "Cursos", "Saúde", "Ações Sociais"];
 
 export default function Eventos() {
-  const { data: dbEvents, refetch } = trpc.event.list.useQuery();
-  const events: Event[] = (dbEvents ?? []).map((event) => ({ ...event, date: event.date ?? "", time: event.time ?? "", location: event.location ?? "", organizer: event.organizer ?? "", description: event.description ?? "", attendees: event.attendees ?? undefined }));
+  const { data: dbEvents, refetch } = trpc.event.list.useQuery(undefined, { refetchInterval: 60 * 60 * 1000 });
+  const events: Event[] = (dbEvents ?? []).map((event) => ({ ...event, date: event.date ?? "", time: event.time ?? "", location: event.location ?? "", organizer: event.organizer ?? "", description: event.description ?? "", attendees: event.attendees ?? undefined, sourceUrl: event.sourceUrl ?? undefined }));
   const addEvent = trpc.event.add.useMutation({
     onSuccess: () => {
       toast.success("Evento publicado e salvo para toda a comunidade.");
@@ -97,6 +99,15 @@ export default function Eventos() {
     setFilterOpen(false);
   };
 
+  const eventDate = (value: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return { weekday: "DATA", date: value };
+    const parsed = new Date(`${value}T12:00:00-03:00`);
+    return {
+      weekday: new Intl.DateTimeFormat("pt-BR", { weekday: "short", timeZone: "America/Sao_Paulo" }).format(parsed).replace(".", "").toUpperCase(),
+      date: new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "America/Sao_Paulo" }).format(parsed),
+    };
+  };
+
   return (
     <div className="min-h-screen">
       <Header />
@@ -105,7 +116,7 @@ export default function Eventos() {
       <section className="pt-28 lg:pt-36 pb-12 min-h-[320px] lg:min-h-[360px] relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src={photoUrl("rua-do-outono.jpg")}
+            src={photoUrl("event-novo.png")}
             alt="Árvores coloridas na canaleta da Rua Deputado Heitor Alencar Furtado"
             className="w-full h-full object-cover object-center"
           />
@@ -303,8 +314,9 @@ export default function Eventos() {
                 {/* Date badge */}
                 <div className="shrink-0 w-18 text-center p-2 rounded-lg bg-[oklch(0.72_0.12_40)]/10">
                   <span className="block text-xs text-muted-foreground font-medium uppercase">
-                    {event.date.includes("Sábado") ? "SÁB" : event.date.includes("Domingo") ? "DOM" : event.date.includes("Segunda") ? "SEG" : event.date.includes("Terça") ? "TER" : event.date.includes("Quarta") ? "QUA" : event.date.includes("Quinta") ? "QUI" : event.date.includes("Sexta") ? "SEX" : "HOJ"}
+                    {eventDate(event.date).weekday}
                   </span>
+                  <span className="block text-xs font-semibold text-[oklch(0.72_0.12_40)]">{eventDate(event.date).date}</span>
                   <Calendar className="w-5 h-5 text-[oklch(0.72_0.12_40)] mx-auto" />
                 </div>
 
@@ -335,17 +347,11 @@ export default function Eventos() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-2 shrink-0">
-                  <button
-                    className="text-xs px-3 py-1.5 rounded-lg bg-[oklch(0.72_0.12_40)]/10 text-[oklch(0.72_0.12_40)] hover:bg-[oklch(0.72_0.12_40)] hover:text-white transition-colors flex items-center gap-1"
-                    onClick={() => toast.success("Participação confirmada!")}
-                  >
-                    Participar <ArrowRight className="w-3 h-3" />
-                  </button>
-                  <button className="text-xs px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted transition-colors flex items-center gap-1">
-                    <Heart className="w-3 h-3" /> Favoritar
-                  </button>
-                </div>
+                {event.sourceUrl && (
+                  <a href={event.sourceUrl} target="_blank" rel="noopener noreferrer" className="shrink-0 text-xs px-3 py-1.5 rounded-lg bg-[oklch(0.72_0.12_40)]/10 text-[oklch(0.72_0.12_40)] hover:bg-[oklch(0.72_0.12_40)] hover:text-white transition-colors flex items-center gap-1">
+                    Fonte oficial <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
               </div>
             ))}
           </div>

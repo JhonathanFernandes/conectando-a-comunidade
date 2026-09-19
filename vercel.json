@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
-  "buildCommand": "node scripts/migrate-postgres.mjs && pnpm exec vite build && pnpm exec esbuild scripts/vercel-api.ts --bundle --platform=node --format=esm --packages=external --outfile=api/index.js",
+  "buildCommand": "node scripts/migrate-postgres.mjs && pnpm exec tsx scripts/sync-events.ts && pnpm exec vite build && pnpm exec esbuild scripts/vercel-api.ts --bundle --platform=node --format=esm --packages=external --outfile=api/index.js",
   "outputDirectory": "dist/public",
   "rewrites": [
     { "source": "/api/:route*", "destination": "/api/index?route=:route*" },

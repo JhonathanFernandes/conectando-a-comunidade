@@ -216,7 +216,7 @@ export default function Comercio() {
       <section className="pt-28 lg:pt-36 pb-12 min-h-[320px] lg:min-h-[360px] relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src={photoUrl("rua-antonio-macioski.jpg")}
+            src={photoUrl("comercios-novo.png")}
             alt="Rua Antônio Macioski no Campo Comprido"
             className="w-full h-full object-cover object-center" loading="eager"
           />

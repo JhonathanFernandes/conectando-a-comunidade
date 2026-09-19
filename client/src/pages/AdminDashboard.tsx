@@ -62,7 +62,7 @@ function AuthenticatedAdminDashboard() {
   const { data: denunciasData, refetch: refetchDenuncias } = trpc.complaint.list.useQuery(undefined, { enabled: isAdmin });
   const { data: sugestoesData, refetch: refetchSugestoes } = trpc.suggestion.list.useQuery(undefined, { enabled: isAdmin });
   const { data: telefonesData, refetch: refetchPhones } = trpc.phone.list.useQuery();
-  const { data: eventosData, refetch: refetchEvents } = trpc.event.list.useQuery();
+  const { data: eventosData, refetch: refetchEvents } = trpc.event.listAll.useQuery(undefined, { enabled: isAdmin });
   const { data: muralData, refetch: refetchMural } = trpc.mural.listAll.useQuery(undefined, { enabled: isAdmin });
   const { data: reviewsData, refetch: refetchReviews } = trpc.review.listAll.useQuery({});
 

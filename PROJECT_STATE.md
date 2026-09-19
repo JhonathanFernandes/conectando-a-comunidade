@@ -1,6 +1,6 @@
 # Project State Notes
 
-## Current Status (Aug 21 2026)
+## Current Status (Sep 19 2026)
 - Star rating system: working on both Comercio and Servicos pages
 - Mural da Comunidade: new page at /mural, linked in Header nav
 - Admin Dashboard: has "Mural" and "Avaliações" tabs for managing posts/reviews
@@ -21,5 +21,15 @@
 ## Remaining TODO Items (from todo.md - all marked [x] now)
 All items from the star ratings + mural feature are complete.
 
-## Next Step
-Save checkpoint after verifying Comercio and Mural pages render correctly with empty state.
+## Delivery status
+- TypeScript check: passing
+- Automated tests: 7 passing
+- Production build: passing
+- Vercel and Render deployment configurations: present
+- Delivery documentation and environment template: present
+
+## Deployment checklist
+- Configure `DATABASE_URL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD` and
+  `ADMIN_SESSION_SECRET` in the chosen hosting provider.
+- Run the PostgreSQL migrations.
+- Verify the public API and `/admin` after deployment.

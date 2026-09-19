@@ -15,7 +15,7 @@ export default function Sobre() {
       {/* Hero com foto */}
       <section className="relative pt-28 lg:pt-36 pb-16 min-h-[320px] lg:min-h-[360px] overflow-hidden">
         <img
-          src={photoUrl("predios-campo-comprido.jpg")}
+          src={photoUrl("ecoville-nova.png")}
           alt="Edifícios residenciais no Campo Comprido"
           className="absolute inset-0 w-full h-full object-cover object-center"
         />

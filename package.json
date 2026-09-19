@@ -8,8 +8,11 @@
     "build": "vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit",
+    "validate": "pnpm check && pnpm test && pnpm build",
     "format": "prettier --write .",
     "test": "vitest run",
+    "events:sync": "tsx scripts/sync-events.ts",
+    "content:sync": "tsx scripts/sync-content.ts auto",
     "db:push": "drizzle-kit generate && drizzle-kit migrate"
   },
   "dependencies": {

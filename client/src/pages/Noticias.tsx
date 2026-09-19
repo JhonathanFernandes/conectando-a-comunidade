@@ -15,11 +15,11 @@ const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
 });
 
 const touristPhotos = [
-  { src: photoUrl("jardim-botanico-curitiba.jpg"), alt: "Jardim Botânico de Curitiba", name: "Jardim Botânico", credit: "Adelano Lázaro", source: "https://commons.wikimedia.org/wiki/File:Curitiba_jardim_botanico.jpg" },
-  { src: photoUrl("opera-de-arame-curitiba.jpg"), alt: "Ópera de Arame em Curitiba", name: "Ópera de Arame", credit: "Marcus Bezerra", source: "https://commons.wikimedia.org/wiki/File:Curitiba_-_%C3%93pera_de_Arame_-_Ala.jpg" },
-  { src: photoUrl("museu-oscar-niemeyer-curitiba.jpg"), alt: "Museu Oscar Niemeyer em Curitiba", name: "Museu Oscar Niemeyer", credit: "Morio · CC BY-SA 3.0", source: "https://commons.wikimedia.org/wiki/File:Museu_Oscar_Niemeyer_12_Curitiba_Brasil.jpg" },
-  { src: photoUrl("parque-tangua-curitiba.jpg"), alt: "Parque Tanguá em Curitiba", name: "Parque Tanguá", credit: "Leonardo Stabile", source: "https://commons.wikimedia.org/wiki/File:Parque_Tangu%C3%A1,_Curitiba.jpg" },
-  { src: photoUrl("parque-barigui.jpg"), alt: "Parque Barigui em Curitiba", name: "Parque Barigui", credit: "Angelo Orselli · CC BY-SA 3.0", source: "https://commons.wikimedia.org/wiki/File:Parque_Barigui_Curitiba.jpg" },
+  { src: photoUrl("jardim-botanico-nova.png"), alt: "Jardim Botânico de Curitiba", name: "Jardim Botânico", credit: "Acervo do projeto", source: "#" },
+  { src: photoUrl("opera-de-arame-nova.png"), alt: "Ópera de Arame em Curitiba", name: "Ópera de Arame", credit: "Acervo do projeto", source: "#" },
+  { src: photoUrl("museu-do-olho-nova.png"), alt: "Museu Oscar Niemeyer em Curitiba", name: "Museu Oscar Niemeyer", credit: "Acervo do projeto", source: "#" },
+  { src: photoUrl("parque-tangua-nova.png"), alt: "Parque Tanguá em Curitiba", name: "Parque Tanguá", credit: "Acervo do projeto", source: "#" },
+  { src: photoUrl("parque-barigui-nova.png"), alt: "Parque Barigui em Curitiba", name: "Parque Barigui", credit: "Acervo do projeto", source: "#" },
 ];
 
 export default function Noticias() {

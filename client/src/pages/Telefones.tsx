@@ -51,7 +51,7 @@ export default function Telefones() {
       <section className="pt-28 lg:pt-36 pb-12 min-h-[320px] lg:min-h-[360px] relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src={photoUrl("terminal-campo-comprido.jpg")}
+            src={photoUrl("telefine-novo.png")}
             alt="Terminal Campo Comprido"
             className="w-full h-full object-cover object-center" loading="eager"
           />

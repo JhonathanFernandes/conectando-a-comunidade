@@ -19,7 +19,7 @@ const faqs = [
   },
   {
     question: "Como divulgar meu comércio na plataforma?",
-    answer: "Entre em contato conosco pelo e-mail contato@conectandocomunidade.org.br ou acesse a página de Comércio Local e clique em 'Divulgar meu negócio'. Preencha o formulário com as informações do seu estabelecimento.",
+    answer: "Entre em contato conosco pelo e-mail jhonathanads25@gmail.com ou acesse a página de Comércio Local e clique em 'Divulgar meu negócio'. Preencha o formulário com as informações do seu estabelecimento.",
   },
   {
     question: "Como cadastrar um evento?",

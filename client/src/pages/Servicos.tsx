@@ -416,8 +416,8 @@ export default function Servicos() {
       toast.error("Por favor, selecione apenas arquivos de imagem.");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("A imagem deve ter no máximo 5MB.");
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 2MB.");
       return;
     }
     setPhotoFile(file);
@@ -439,7 +439,8 @@ export default function Servicos() {
         reader.onload = () => resolve(String(reader.result).split(",")[1]);
         reader.readAsDataURL(photoFile);
       });
-      const uploaded = await uploadPhotoMutation.mutateAsync({ fileName: photoFile.name, base64Data, mimeType: photoFile.type || "image/jpeg" });
+      const mimeType = photoFile.type === "image/png" || photoFile.type === "image/webp" ? photoFile.type : "image/jpeg";
+      const uploaded = await uploadPhotoMutation.mutateAsync({ fileName: photoFile.name, base64Data, mimeType });
       return uploaded.url;
     } catch {
       return null;
@@ -482,7 +483,7 @@ export default function Servicos() {
       <section className="pt-28 lg:pt-36 pb-12 min-h-[320px] lg:min-h-[360px] relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src={localPhotoUrl("rua-antonio-macioski.jpg")}
+            src={localPhotoUrl("servicos-novo.png")}
             alt="Rua Antônio Macioski no Campo Comprido"
             className="w-full h-full object-cover object-center" loading="eager"
           />

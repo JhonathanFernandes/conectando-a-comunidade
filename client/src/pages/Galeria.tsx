@@ -9,8 +9,31 @@ import Footer from "@/components/Footer";
 import WaveDivider from "@/components/WaveDivider";
 import { neighborhoodPhotos, photoUrl } from "@/data/photos";
 
-type Photo = (typeof neighborhoodPhotos)[number];
-const photos = neighborhoodPhotos;
+type Photo = {
+  src: string;
+  alt: string;
+  caption: string;
+  source?: string;
+};
+
+const photos: Photo[] = [
+  ...neighborhoodPhotos,
+  {
+    src: photoUrl("opera-de-arame-nova.png"),
+    alt: "Passarela e estrutura metálica da Ópera de Arame",
+    caption: "A arquitetura singular da Ópera de Arame",
+  },
+  {
+    src: photoUrl("parque-tangua-nova.png"),
+    alt: "Lago, paredão e cascata do Parque Tanguá",
+    caption: "Natureza e paisagem no Parque Tanguá",
+  },
+  {
+    src: photoUrl("museu-do-olho-nova.png"),
+    alt: "Museu Oscar Niemeyer em Curitiba",
+    caption: "Arquitetura e cultura no Museu Oscar Niemeyer",
+  },
+];
 
 export default function Galeria() {
   const [lightbox, setLightbox] = useState<Photo | null>(null);
@@ -97,10 +120,12 @@ export default function Galeria() {
             />
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center">
               <p className="text-white font-medium">{lightbox.caption}</p>
-              <div className="flex items-center gap-2 text-white/70 text-sm mt-1">
-                <Tag className="w-3.5 h-3.5" />
-                <a href={lightbox.source} target="_blank" rel="noopener noreferrer" className="underline">Fonte e licença da foto</a>
-              </div>
+              {lightbox.source && (
+                <div className="flex items-center gap-2 text-white/70 text-sm mt-1">
+                  <Tag className="w-3.5 h-3.5" />
+                  <a href={lightbox.source} target="_blank" rel="noopener noreferrer" className="underline">Fonte e licença da foto</a>
+                </div>
+              )}
             </div>
           </motion.div>
         )}

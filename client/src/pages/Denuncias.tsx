@@ -77,8 +77,8 @@ export default function Denuncias() {
         {/* Impactful background image */}
         <div className="absolute inset-0">
           <img
-            src={photoUrl("rua-pedro-zanlorenzi.jpg")}
-            alt="Rua Pedro Artur Zanlorenzi no Campo Comprido"
+            src={photoUrl("denuncia-novo.png")}
+            alt="Canal de Denúncias do Campo Comprido"
             className="w-full h-full object-cover object-center"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-transparent" />

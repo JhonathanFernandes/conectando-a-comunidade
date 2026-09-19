@@ -8,6 +8,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, publicProcedure, router } from "./_core/trpc";
 import { getDb } from "./db";
 import { getCurrentNews } from "./news";
+import { getPublicEvents } from "./events";
 import {
   commerces,
   complaints,
@@ -108,13 +109,17 @@ export const appRouter = router({
       }),
     uploadPhoto: publicProcedure
       .input(z.object({
-        fileName: z.string().min(1),
-        base64Data: z.string().min(1),
-        mimeType: z.string().default("image/jpeg"),
+        fileName: z.string().min(1).max(180),
+        base64Data: z.string().min(1).max(2_800_000),
+        mimeType: z.enum(["image/jpeg", "image/png", "image/webp"]).default("image/jpeg"),
       }))
       .mutation(async ({ input }) => {
-        const { storagePut } = await import("./storage");
         const fileBuffer = Buffer.from(input.base64Data, "base64");
+        if (fileBuffer.byteLength > 2 * 1024 * 1024) throw new TRPCError({ code: "PAYLOAD_TOO_LARGE", message: "A foto deve ter no máximo 2 MB." });
+        if (!process.env.BUILT_IN_FORGE_API_URL || !process.env.BUILT_IN_FORGE_API_KEY) {
+          return { url: `data:${input.mimeType};base64,${input.base64Data}`, key: "database-inline" };
+        }
+        const { storagePut } = await import("./storage");
         const key = `commerce-photos/${Date.now()}-${input.fileName}`;
         const { url } = await storagePut(key, fileBuffer, input.mimeType);
         return { url, key };
@@ -252,10 +257,11 @@ export const appRouter = router({
 
   // === Eventos ===
   event: router({
-    list: publicProcedure.query(async () => {
+    list: publicProcedure.query(() => getPublicEvents()),
+    listAll: adminProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
-      return await db.select().from(events).orderBy(desc(events.createdAt));
+      return db.select().from(events).orderBy(desc(events.createdAt));
     }),
     add: publicProcedure
       .input(

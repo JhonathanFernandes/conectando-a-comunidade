@@ -2,7 +2,7 @@
  * Design: Terra Viva — Footer com identidade comunitária
  */
 import { Link } from "wouter";
-import { MapPin, Heart, Mail } from "lucide-react";
+import { MapPin, Mail } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -18,8 +18,11 @@ export default function Footer() {
               </div>
             </div>
             <p className="text-sm leading-relaxed opacity-75 max-w-md">
-              Uma iniciativa da comunidade para conectar moradores, serviços e oportunidades
-              do bairro Campo Comprido, em Curitiba. Sua voz faz a diferença.
+              Este projeto foi desenvolvido como parte da Atividade Extensionista do curso de
+              Análise e Desenvolvimento de Sistemas, com o objetivo de aplicar na prática os
+              conhecimentos adquiridos ao longo da formação e contribuir com a comunidade do
+              Campo Comprido. A iniciativa também está alinhada aos Objetivos de Desenvolvimento
+              Sustentável (ODS) propostos pela atividade.
             </p>
           </div>
 
@@ -54,10 +57,10 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-accent" />
-                <span>contato@conectandocomunidade.org.br</span>
+                <span>jhonathanads25@gmail.com</span>
               </div>
               <p className="pt-2 text-xs opacity-50">
-                Desenvolvido com <Heart className="w-3 h-3 inline text-red-400" /> por JHOW DEV
+                Desenvolvido por JHOW DEV
               </p>
             </div>
           </div>

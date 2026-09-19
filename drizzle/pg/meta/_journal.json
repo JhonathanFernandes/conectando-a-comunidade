@@ -15,6 +15,13 @@
       "when": 1789745241344,
       "tag": "0001_little_mandrill",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789833600000,
+      "tag": "0002_events_source",
+      "breakpoints": true
     }
   ]
 }

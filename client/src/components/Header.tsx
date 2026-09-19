@@ -10,11 +10,11 @@ import { useTheme } from "@/contexts/ThemeContext";
 
 const navLinks = [
   { href: "/", label: "Início", icon: null },
+  { href: "/noticias", label: "Notícias", icon: <Newspaper className="w-4 h-4" /> },
   { href: "/servicos", label: "Serviços", icon: <MapPin className="w-4 h-4" /> },
-  { href: "/comercio", label: "Comércio", icon: <Users className="w-4 h-4" /> },
+  { href: "/comercio", label: "Comércios", icon: <Users className="w-4 h-4" /> },
   { href: "/eventos", label: "Eventos", icon: <Calendar className="w-4 h-4" /> },
   { href: "/denuncias", label: "Denúncias", icon: <AlertTriangle className="w-4 h-4" /> },
-  { href: "/noticias", label: "Notícias", icon: <Newspaper className="w-4 h-4" /> },
   { href: "/telefones", label: "Telefones", icon: <Phone className="w-4 h-4" /> },
   { href: "/sugestoes", label: "Sugestões", icon: <Users className="w-4 h-4" /> },
   { href: "/mural", label: "Mural", icon: <MessageCircle className="w-4 h-4" /> },

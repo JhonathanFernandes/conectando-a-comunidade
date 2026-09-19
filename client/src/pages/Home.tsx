@@ -211,10 +211,16 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-              className="max-w-2xl mx-auto text-center"
+              className="max-w-2xl lg:max-w-none mx-auto text-center"
             >
-              <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">
-                {carouselImages[currentSlide].caption}
+              <h1 className="font-serif text-4xl md:text-5xl lg:text-[clamp(2rem,3.5vw,3.75rem)] lg:whitespace-nowrap font-bold text-white mb-4 leading-tight">
+                {carouselImages[currentSlide].caption === "As cores do outono transformam os caminhos do bairro" ? (
+                  <>
+                    As cores do outono transformam<span className="lg:hidden"> </span>
+                    <br className="hidden lg:block" />
+                    os caminhos do bairro
+                  </>
+                ) : carouselImages[currentSlide].caption}
               </h1>
             </motion.div>
           </div>

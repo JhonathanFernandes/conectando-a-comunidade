@@ -74,8 +74,8 @@ export default function Sugestoes() {
       <section className="pt-28 lg:pt-36 pb-12 min-h-[320px] lg:min-h-[360px] relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src={photoUrl("rua-antonio-macioski.jpg")}
-            alt="Rua Antônio Macioski no Campo Comprido"
+            src={photoUrl("sugestao-nova.png")}
+            alt="Sugestões e reclamações da comunidade"
             className="w-full h-full object-cover object-center"
           />
           <div className="absolute inset-0 bg-black/50" />
